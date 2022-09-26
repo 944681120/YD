@@ -6,8 +6,7 @@
 #include "lib.h"
 #include "data_save.h"
 #define __APP_DEBUG__
-
-
+#include "cfgChange.h"
 
 //thread_t
 pthread_t all_threads[10];
@@ -44,6 +43,7 @@ int main(int argc, char **argv)
     all_threads[count_threads++] = thread_down_init();
     all_threads[count_threads++] = thread_up_init();
     all_threads[count_threads++] = thread_yu_init();
+    all_threads[count_threads++] = thread_cfgChange_init();
 
     pthread_join(all_threads[0],NULL);
     drop_zlog();
