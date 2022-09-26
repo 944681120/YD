@@ -1,0 +1,11 @@
+[Unit]
+Description=app-cjq service
+
+[Service]
+ExecStart=/usr/bin/app-cjq
+ExecReload=/bin/kill -HUP 
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

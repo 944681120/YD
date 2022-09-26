@@ -1,0 +1,8 @@
+Package: app-cjq
+Version: 1.1.13
+Architecture: armel
+Section: utils
+Maintainer: huawei <huawei@huawei.com>
+Installed-Size: 2000
+Priority: optional
+Description: this is app for collection data!

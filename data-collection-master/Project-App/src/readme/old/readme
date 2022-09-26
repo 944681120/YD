@@ -1,0 +1,29 @@
+1. vscode 下使用 sudo 
+https://www.jianshu.com/p/368e5de24cc9
+
+下面介绍如何利用 VSCode 以 root 权限调试程序。
+
+首先需要注意到 launch.json 文件里的 "miDebuggerPath" 这个选项，它是调试器的路径，如果这个调试器可以以 root 权限运行，那么就达成了我们的目的了。
+
+在 /home/user_name 目录下创建文件 gdb，user_name 需要替换为实际的用户名。
+
+然后编辑该文件 vim gdb，加入下述内容：
+
+sudo /usr/bin/gdb "$@"
+给 gdb 添加执行权限，
+
+chmod +x gdb
+在修改 "miDebuggerPath" 成为
+
+{
+    "miDebuggerPath": "/home/jackis/gdb"
+}
+
+
+/////////==============================================================
+发送ip 120.238.64.59 33048
+测试编号：9900000001来测试吧，已配置水位、雨量、流量、图片、视频监测要素，若需接入其它要素后续再增加
+
+http://www.gdremote.com/yd/YDMainPage.html
+账号：ZNWG01
+密码：111111

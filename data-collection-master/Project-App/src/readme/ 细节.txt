@@ -1,0 +1,4 @@
+1. 链路心跳 param[0x52].val u单位 second
+   测试OK
+   
+2.

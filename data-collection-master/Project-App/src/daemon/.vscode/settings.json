@@ -1,0 +1,23 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "serial.h": "c",
+        "cstdlib": "cpp",
+        "lib.h": "c",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "limits": "cpp",
+        "*.tcc": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "cmath": "cpp",
+        "streambuf": "cpp",
+        "initializer_list": "cpp",
+        "iosfwd": "cpp",
+        "stdexcept": "cpp",
+        "type_traits": "cpp",
+        "*.inc": "c",
+        "default_setting.h": "c"
+    }
+}

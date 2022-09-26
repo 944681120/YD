@@ -1,0 +1,17 @@
+{
+	"struct": [
+		{
+		"type": "DaemonSetting",
+		"value": {
+                           "enable":1,
+                           "ip":"192.168.3.223",
+                           "user":"kaihua",
+                           "password":"111111",
+                           "downdir":"/app-cjq",
+                           "serverdir":"ftp",
+						   "interval":60
+			}
+		}
+
+	]
+}

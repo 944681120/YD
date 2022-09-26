@@ -1,0 +1,11 @@
+[Unit]
+Description=app-daemon service
+
+[Service]
+ExecStart=/usr/bin/app-daemon
+ExecReload=/bin/kill -HUP 
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

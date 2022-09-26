@@ -1,0 +1,47 @@
+#!/bin/bash
+if [ ! -d "/app-cjq" ]; then
+	echo "mkdir /app-cjq"
+	mkdir /app-cjq
+fi
+
+if [ ! -d "/app-cjq/setting" ]; then
+	echo "mkdir /app-cjq/setting"
+	mkdir /app-cjq/setting
+fi
+if [ ! -d "/app-cjq/log" ]; then
+	echo "mkdir /app-cjq/log"
+	mkdir /app-cjq/log
+fi
+
+if [ ! -d "/app-cjq/report" ]; then
+	echo "mkdir /app-cjq/report"
+	mkdir /app-cjq/report
+fi
+
+cp -rn app-cjq/tmpinst/setting/*  /app-cjq/setting/
+
+
+#===========1. 开机运行=================================================
+systemctl enable app-cjq.service
+systemctl enable app-daemon.service
+# #===========2. 安装deb后运行============================================
+# #app
+# dpids=$(ps -ef | grep app-cjq | grep -v "grep" | awk '{print }')
+# if [ -z "$dpids" ];then
+#     echo "start service:app-cjq"
+#     systemctl start app-cjq
+# fi
+
+# # sleep 2
+
+# #daemon
+# dpids=$(ps -ef | grep app-daemon | grep -v "grep" | awk '{print }')
+# if [ -z "$dpids" ];then
+#     echo "start service:app-daemon"
+#     systemctl start app-daemon
+# fi
+
+rm -rf /app-cjq/tmpinst
+
+#reboot
+

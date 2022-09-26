@@ -1,0 +1,13 @@
+create-ova -t app -d appdemo1.deb -n appdemo1 -s srv1 40 50  -s srv2 40 50 -version_short SV01.001 -ar arm64 -ot debian -ov buster -vendor huawei
+
+
+create-ova -t app -d app-cjq.deb -n app-cjq -s srv1 40 50  -s srv2 40 50 -version_short SV01.001 -ar arm64 -ot debian -ov buster -vendor huawei
+
+
+安装createova工具前要求：
+已经安装了QEMU工具，具体请参见如何获取并安装QEMU工具。
+已经获取createova工具和镜像文件，并将两者放置在Linux环境的同一个目录下。createova工具获取路径：createova工具下载。
+具体安装createova工具步骤如下：
+
+执行命令sudo chmod +x createova，安装createova工具。
+执行命令sudo createova -h，查看createova工具中对应的命令使用。
