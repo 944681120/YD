@@ -21,6 +21,19 @@ struct MqttClientConfig
     string topic_update_ack;
 };
 
+struct MqttClientConfig mcc = 
+{
+    "47.92.5.227",  //http://broker-cn.emqx.io
+    1883,
+    "mqtt报文修改配置文件",
+    "",
+    "",
+
+    //上报数据
+    "topic_cfgChange",
+    "topic_cfgChange_ack",
+};
+
 int isJsonStr(const char* str, json* pOut)
 {
     json obj;
@@ -64,20 +77,38 @@ int isJsonFile(const char* filePath, json* pOut)
 
 static void topic_cfgChange_handler(void *client, message_data_t *msg)
 {
-    (void)client;
     std::stringstream strstream;
     json jRecv;     //接收的json
     json jDest;     //处理的json
 
+    mqtt_message_t ackMsg = 
+    {
+        .qos = QOS0,
+        .retained = 0,
+        .dup = 0,
+        .id = 0,
+        .payloadlen = 0,
+        .payload = nullptr,
+    };
+    char ackCode_0[] = "{ \"ackCode\": 0, \"message\":\"修改配置文件成功!\" }";
+    char ackCode_1[] = "{ \"ackCode\":-1, \"message\":\"发送json数据不正确\" }";
+    char ackCode_2[] = "{ \"ackCode\":-2, \"message\":\"设备配置文件json格式错误,请检查配置文件!\" }";
+
     if ( isJsonStr( (const char*)msg->message->payload, &jRecv) < 0 )
     {
         ERROR("[修改配置]:发送json数据不正确 : %s", (const char *)msg->message->payload);
+        ackMsg.payload = ackCode_1;
+        ackMsg.payloadlen = strlen(ackCode_1);
+        mqtt_publish((mqtt_client_t*)client, (char *)mcc.topic_update_ack.c_str(), &ackMsg);
         return;
     }
 
     if ( isJsonFile( PATH_CFG, &jDest ) < 0 )
     {
         ERROR("[修改配置]:配置文件json格式错误,请检查配置文件!");
+        ackMsg.payload = ackCode_2;
+        ackMsg.payloadlen = strlen(ackCode_2);
+        mqtt_publish((mqtt_client_t*)client, (char *)mcc.topic_update_ack.c_str(), &ackMsg);
         return;
     }
 
@@ -88,6 +119,9 @@ static void topic_cfgChange_handler(void *client, message_data_t *msg)
     }
 
     INFO("[修改配置] 修改了配置:\n %s\n", strstream.str().c_str());
+    ackMsg.payload = ackCode_0;
+    ackMsg.payloadlen = strlen(ackCode_0);
+    mqtt_publish((mqtt_client_t*)client, (char *)mcc.topic_update_ack.c_str(), &ackMsg);
 
     std::ofstream ofs(PATH_CFG);
     ofs << std::setw(4) << jDest << std::endl;
@@ -98,18 +132,6 @@ void* cfgChange_thread(void *arg)
 {
     int res = 0;
     mqtt_client_t *client = mqtt_lease();
-    struct MqttClientConfig mcc = 
-    {
-        "47.92.5.227",  //http://broker-cn.emqx.io
-        1883,
-        "mqtt报文修改配置文件",
-        "",
-        "",
-
-        //上报数据
-        "topic_cfgChange",
-        "topic_cfgChange_ack",
-    };
 
     mqtt_set_host(client, (char *)mcc.host.c_str());
     mqtt_set_port(client, (char *)std::to_string(mcc.port).c_str());
@@ -131,6 +153,8 @@ void* cfgChange_thread(void *arg)
         sleep(1);
     }
 
+    mqtt_disconnect(client);
+    mqtt_release(client);
     return NULL;
 }
 
