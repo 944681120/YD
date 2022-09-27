@@ -125,7 +125,7 @@ static void topic_cfgChange_handler(void *client, message_data_t *msg)
 
     std::ofstream ofs(PATH_CFG);
     ofs << std::setw(4) << jDest << std::endl;
-    yanshichongqi = true;   //修改配置文件重新启动程序
+    // yanshichongqi = true;   //修改配置文件重新启动程序(有bug?)
 }
 
 void* cfgChange_thread(void *arg)
@@ -140,13 +140,24 @@ void* cfgChange_thread(void *arg)
     // mqtt_set_password(client, (char *)mcc.passwd.c_str());
     mqtt_set_clean_session(client, 1);
     
-    if ((res = mqtt_connect(client)) != 0)
+    for (int i = 0; ; i++)
     {
-        ERROR("[修改配置]:mqtt连接失败: code = %s",res);
-        return NULL;
+        if ((res = mqtt_connect(client)) != 0)
+        {
+            if ( i >= 10 )
+            {
+                ERROR("[修改配置]:多次mqtt连接失败: code = %d",res);
+                return NULL;
+            }
+        }
+        else
+        {
+            INFO("[修改配置]:mqtt连接成功 i=%d", i);
+            break;
+        }
+        sleep(5);
     }
-    INFO("[修改配置]:mqtt连接成功");
-    mqtt_subscribe(client, (char *)mcc.topic_update.c_str(), QOS1, topic_cfgChange_handler);
+    mqtt_subscribe(client, (char *)mcc.topic_update.c_str(), QOS0, topic_cfgChange_handler);
 
     while (1)
     {
