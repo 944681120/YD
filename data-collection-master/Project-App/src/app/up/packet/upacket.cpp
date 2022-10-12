@@ -114,6 +114,32 @@ UDPacket* upacket_decode(UDpacketCache*ud,u8*datain,int len,bool reset)
     return NULL;
 }
 
+static int insertArr(u8* src, int size, int srclen, int index, const u8* pData, int datalen)
+{
+    if (src == NULL) 
+    {
+        return 0;
+    }
+
+    if ( size < srclen + datalen )
+    {
+        return -1;  //原数组长度不够
+    }
+
+    int newSrcLen = srclen + datalen;
+    for (int i = newSrcLen-1; i >= index + datalen; i--)
+    {
+        src[i] = src[i-datalen];
+    }
+    
+    for (int i = 0; i < datalen; i++)
+    {
+        src[i+index] = pData[i];
+    }
+
+    return 0;
+}
+
 int upacket_encode(UUPacket*packet,bool up,u8 remote, ul64 local, u16 passwd, UPCMD cmd, u8*data1,int len1,u8* data2, int len2, STX stx,ETX etx)
 {
     u16 crc = 0;
@@ -138,6 +164,19 @@ int upacket_encode(UUPacket*packet,bool up,u8 remote, ul64 local, u16 passwd, UP
     if(data2!=NULL)
         memcpy(packet->data+len1,data2,len2);
     packet->data[len] = (u8)etx;
+    /************** 插入规约版本start **************/
+    int insertPos = 23; //插入data的位置
+    // // u16 FlagAndLen =  0xFFA1;   //规约版本标识及长度
+    // // u16 version =  0x0180;      //规约版本
+    // // u16 RTU_Len =  0xFFA1;      //RTU 序号标识及长度
+    // // u16 RTU_Num =  0x0001;      //RTU 序号
+    char insertBuf[] = { 0xFF, 0xA1, 0x01, 0x80, 0xFF, 0x9F, 0x00, 0x01 };
+    insertArr(packet->data, sizeof(packet->data), len, insertPos, (const u8*)insertBuf, sizeof(insertBuf));
+    len += sizeof(insertBuf);
+    packet->len += (sizeof(insertBuf)<<8);
+    INFO("插入数据");
+    
+    /************** 插入规约版本end **************/
     crc = crc_calculate((u8*)packet,len+15);
     packet->data[len+1] =  (crc>>8)&0xFF;
     packet->data[len+2] =  crc&0xff;
