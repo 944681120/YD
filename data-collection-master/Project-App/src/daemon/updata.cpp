@@ -65,7 +65,7 @@ bool load_daemon_setting(void)
 
     load_rtu_setting(RTU_SETTING_FULLNAME, &rtusetting);
 
-    if (rtusetting.center[0] == 0)
+    if (rtusetting.param.center[0] == 0)
     {
         ERROR("[rtu setting] center[0] ==0\n");
         return false;
@@ -82,21 +82,21 @@ int ftp_get_setting(void)
     // const char* password = "111111";
     // const char* dir = "/app-cjq";
     // const char* serverdir="ftp";
-    // strcpy(rtusetting.ftp.ip,ip);
-    // strcpy(rtusetting.ftp.user,user);
-    // strcpy(rtusetting.ftp.password,password);
-    // strcpy(rtusetting.ftp.downdir,dir);
-    // strcpy(rtusetting.ftp.serverdir,serverdir);
-    // rtusetting.ftp.enable = true;
+    // strcpy(rtusetting.server.ftp.ip,ip);
+    // strcpy(rtusetting.server.ftp.user,user);
+    // strcpy(rtusetting.server.ftp.password,password);
+    // strcpy(rtusetting.server.ftp.downdir,dir);
+    // strcpy(rtusetting.server.ftp.serverdir,serverdir);
+    // rtusetting.server.ftp.enable = true;
 
     load_daemon_setting();
 
-    if (rtusetting.ftp.enable == 1)
+    if (rtusetting.server.ftp.enable == 1)
     {
-        if (strlen(rtusetting.ftp.ip.data()) > 0 &&
-            strlen(rtusetting.ftp.downdir.data()) > 0 &&
-            strlen(rtusetting.ftp.user.data()) > 0 &&
-            strlen(rtusetting.ftp.password.data()) > 0)
+        if (strlen(rtusetting.server.ftp.ip.data()) > 0 &&
+            strlen(rtusetting.server.ftp.downdir.data()) > 0 &&
+            strlen(rtusetting.server.ftp.user.data()) > 0 &&
+            strlen(rtusetting.server.ftp.password.data()) > 0)
             return 0;
 
         else
@@ -122,7 +122,7 @@ int ftp_connect_server(const char *ip, const char *user, const char *password)
 int ftp_list_deb_version(int fd, char *sdir, char *bufferout, const char *partten)
 {
     char *aa = bufferout;
-    void *data;
+    void *data = nullptr;
     unsigned long long datalen;
     printf("begin to list ftp .\r\n");
     int result = cftp.ftp_list(fd, sdir, &data, &datalen);
@@ -362,22 +362,22 @@ int updata_poll(int interval)
         static int t = 0;
         t += interval;
 
-        if (rtusetting.ftp.enable == false)
+        if (rtusetting.server.ftp.enable == false)
             return 0;
 
-        if (t < rtusetting.ftp.interval)
+        if (t < rtusetting.server.ftp.interval)
         {
             return 0;
         }
         t = 0;
 
         // connect
-        if ((ret = ftp_connect_server(rtusetting.ftp.ip.data(), rtusetting.ftp.user.data(), rtusetting.ftp.password.data())) < 0)
+        if ((ret = ftp_connect_server(rtusetting.server.ftp.ip.data(), rtusetting.server.ftp.user.data(), rtusetting.server.ftp.password.data())) < 0)
             return -1;
         fd = ret;
 
         // list
-        if ((ret = ftp_list_deb_version(fd, (char *)rtusetting.ftp.serverdir.data(), debversion, debpartten)) < 0)
+        if ((ret = ftp_list_deb_version(fd, (char *)rtusetting.server.ftp.serverdir.data(), debversion, debpartten)) < 0)
             return -1;
         // curent
         if ((ret = get_current_app_version(app, version, sizeof(version))) < 0)
@@ -404,8 +404,8 @@ int updata_poll(int interval)
         {
             char filename[100];
             sprintf(filename, "%s_%s.tar", app, debversion);
-            mk_all_dir((char *)rtusetting.ftp.downdir.data());
-            if (download_deb(fd, rtusetting.ftp.downdir.data(), rtusetting.ftp.serverdir.data(), filename) != 0)
+            mk_all_dir((char *)rtusetting.server.ftp.downdir.data());
+            if (download_deb(fd, rtusetting.server.ftp.downdir.data(), rtusetting.server.ftp.serverdir.data(), filename) != 0)
             {
                 printf("down load file:%s faile\r\n", filename);
             }
@@ -417,9 +417,9 @@ int updata_poll(int interval)
                     shutdown_app(app);
 
                 //安装
-                if (install_app(rtusetting.ftp.downdir.data(), filename, debversion) != 0)
+                if (install_app(rtusetting.server.ftp.downdir.data(), filename, debversion) != 0)
                 {
-                    if (install_app(rtusetting.ftp.downdir.data(), filename, debversion) != 0)
+                    if (install_app(rtusetting.server.ftp.downdir.data(), filename, debversion) != 0)
                     {
                         printf("install Error.\n");
                         return 1;

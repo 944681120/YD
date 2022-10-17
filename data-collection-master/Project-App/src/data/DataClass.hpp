@@ -2,8 +2,8 @@
 
 //通用头文件
 #include <sys/types.h>
-#define N(a, b) a, b
-#define C(a) a, 0
+#define NNNN(a, b) a, b
+#define CCCC(a) a, 0
 
 #include <iostream>
 #include <stdio.h>

@@ -7,7 +7,7 @@
 int get_shishi_all(u8 *dataout)
 {
     ZhengWen<string> z;
-    z.init(rtu.shishi, &devdata);
+    z.init(rtu.param.shishi, &devdata);
     return z.to_array(dataout);
 }
 

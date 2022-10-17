@@ -156,25 +156,28 @@ int param_recovery()
 {
     char buf[50];
     char *stopString = NULL;
-    param[0x02].val = std::strtoull(rtu.terminalNo.c_str(), &stopString, 16);
-    param[0x03].val = std::strtoull(rtu.passwd.c_str(), &stopString, 16);
-    for (int i = 0; i < 4 && i < rtu.center.size(); i++)
+    param[0x02].val = std::strtoull(rtu.param.terminalNo.c_str(), &stopString, 16);
+    param[0x03].val = std::strtoull(rtu.param.passwd.c_str(), &stopString, 16);
+    for (int i = 0; i < 4 && i < rtu.param.center.size(); i++)
     {
-        param[0x01].hex[i] = (u8)rtu.center[i];
+        param[0x01].hex[i] = (u8)rtu.param.center[i];
     }
-    for (int i = 0; i < 8 && i < rtu.remote.size(); i++)
+    for (int i = 0; i < 8 && i < rtu.param.remote.size(); i++)
     {
         char buffer[40];
         DataClassItem *it = &param[0x04 + i];
-        ipstring2hex((char *)rtu.remote[i].c_str(), buffer);
+        ipstring2hex((char *)rtu.param.remote[i].c_str(), buffer);
         memcpy(it->hex, buffer, 20);
         PRINTBYTES("param.%02X", it->hex, 20, it->config.id);
     }
 
-    if (rtu.model.compare("normal") == 0)
+    if (rtu.param.model.compare("normal") == 0)
         param[0x0c].hex[0] = 0x02;
 
-    param["terminalType"].val = rtu.terminalType;
+    param["terminalType"].val = rtu.param.terminalType;
+
+    param["protocolVersion"].val = rtu.device.gz.version;
+    param["rtuSN"].val = rtu.device.gz.sn;
 
     INFO("param 读入的配置为 :%s", param.tolog().c_str());
     INFO("数据内容为:\r\n%s", param.toString().c_str());
@@ -184,7 +187,7 @@ int param_recovery()
 int runtime_recovery()
 {
     map<string, l64>::iterator it;
-    for (it = rtu.runtime.begin(); it != rtu.runtime.end(); it++)
+    for (it = rtu.param.runtime.begin(); it != rtu.param.runtime.end(); it++)
         runtime[it->first].val = it->second;
     INFO("runtime 读入的配置为 :%s", runtime.tolog().c_str());
     INFO("数据内容为:\r\n%s", runtime.toString().c_str());
@@ -231,30 +234,30 @@ int param_save(rtu_setting *pr)
     char buf[50];
     char *stopString = NULL;
     // 0x02
-    if (std::strtoull(pr->terminalNo.c_str(), &stopString, 16) != param[0x02].val)
+    if (std::strtoull(pr->param.terminalNo.c_str(), &stopString, 16) != param[0x02].val)
     {
-        pr->terminalNo =  std::to_string(param[0x02].val);
+        pr->param.terminalNo = std::to_string(param[0x02].val);
         pr->dirty = true;
     }
     // 0x03
-    if (param[0x03].val != std::strtoull(pr->passwd.c_str(), &stopString, 16))
+    if (param[0x03].val != std::strtoull(pr->param.passwd.c_str(), &stopString, 16))
     {
-        pr->passwd = tostring16(param[0x03].val);
+        pr->param.passwd = tostring16(param[0x03].val);
         pr->dirty = true;
     }
 
     // center 0x01
     u8 cc[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-    for (int i = 0; i < pr->center.size(); i++)
-        cc[i] = pr->center[i];
+    for (int i = 0; i < pr->param.center.size(); i++)
+        cc[i] = pr->param.center[i];
     if (memcmp(cc, param[0x01].hex, 4) != 0)
     {
         pr->dirty = true;
-        pr->center.clear();
-        pr->center.push_back(param[0x01].hex[0]);
-        pr->center.push_back(param[0x01].hex[1]);
-        pr->center.push_back(param[0x01].hex[2]);
-        pr->center.push_back(param[0x01].hex[3]);
+        pr->param.center.clear();
+        pr->param.center.push_back(param[0x01].hex[0]);
+        pr->param.center.push_back(param[0x01].hex[1]);
+        pr->param.center.push_back(param[0x01].hex[2]);
+        pr->param.center.push_back(param[0x01].hex[3]);
     }
 
     // ip address
@@ -267,20 +270,33 @@ int param_save(rtu_setting *pr)
         if (it->hex[0] == 0xFF)
             break;
         hex2ipstring((char *)it->hex, ipbuffer);
-        if (((i + 1) > pr->remote.size()) ||
-            (pr->remote[i].compare(string(ipbuffer)) != 0))
+        if (((i + 1) > pr->param.remote.size()) ||
+            (pr->param.remote[i].compare(string(ipbuffer)) != 0))
         {
             pr->dirty = true;
-            pr->remote[i] = string(ipbuffer);
+            pr->param.remote[i] = string(ipbuffer);
         }
     }
 
     // model
     if (param[0x0c].hex[0] == 0x02)
     {
-        pr->model = ("normal");
+        pr->param.model = ("normal");
     }
-    rtu.terminalType = param["terminalType"].val;
+    rtu.param.terminalType = param["terminalType"].val;
+
+    // version.sn
+    if (param[0xFFA1].val != pr->device.gz.version)
+    {
+        pr->dirty = true;
+        pr->device.gz.version = param[0xFFA1].val;
+    }
+
+    if (param[0xFF9F].val != pr->device.gz.sn)
+    {
+        pr->dirty = true;
+        pr->device.gz.sn = param[0xFF9F].val;
+    }
 
     // output test
     {
@@ -294,7 +310,7 @@ int param_save(rtu_setting *pr)
 
 int runtime_save(rtu_setting *pr)
 {
-    map<string, l64> *rt = &pr->runtime;
+    map<string, l64> *rt = &pr->param.runtime;
     for (int i = 0; i < runtime.size(); i++)
     {
         DataClassItem p = runtime(i);
@@ -318,9 +334,9 @@ int personalset_save(rtu_setting *pr)
 
 int data_save_if_need(void)
 {
-    //param_save(&rtu);
-    //runtime_save(&rtu);
-    //personalset_save(&rtu);
+    // param_save(&rtu);
+    // runtime_save(&rtu);
+    // personalset_save(&rtu);
 
     if (rtu.dirty)
     {

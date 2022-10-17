@@ -22,7 +22,7 @@
 // CRC校验计算函数
 u16 crc_calculate(u8 *check_buffer, int len)
 {
-	u8 i, j, check_len;
+	int i, j, check_len;
 	u16 crc_result_u16 = 0xffff;
 	check_len = len;
 	for (i = 0; i < check_len; i++)
@@ -144,6 +144,10 @@ void TimeSet(int year, int month, int day, int hour, int min, int sec)
 	struct tm tptr;
 	struct timeval tv;
 
+	INFO("设置系统时间:%04d-%02d-%02d %02d:%02d:%02d",
+		 year, month, day,
+		 hour, min, sec);
+
 	tptr.tm_year = year - 1900;
 	tptr.tm_mon = month - 1;
 	tptr.tm_mday = day;
@@ -158,6 +162,12 @@ void TimeSet(int year, int month, int day, int hour, int min, int sec)
 void TimeSet(string str)
 {
 	time_t t = string2time(str);
+	struct tm *ptm = localtime(&t);
+	TimeSet(ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+}
+
+void TimeSet(time_t t)
+{
 	struct tm *ptm = localtime(&t);
 	TimeSet(ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 }
@@ -916,4 +926,50 @@ std::string list_merge(std::vector<std::string> list, std::string parttern)
 		ss << list[i] << parttern;
 	}
 	return ss.str();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+long findfileinfolder(const char *dir_name, string extend_name, std::vector<std::string> &fileList, std::vector<std::string> &nameList) //文件路径
+{
+	long number = 0;
+	if (NULL == dir_name)
+	{
+		ERROR("目录不存在:%s.", dir_name);
+		return 0;
+	}
+	struct stat s;
+	lstat(dir_name, &s);
+	struct dirent *filename; // return value for readdir()
+	DIR *dir;				 // return value for opendir()
+	dir = opendir(dir_name);
+	if (NULL == dir)
+	{
+		ERROR("无法打开目录:%s,创建该目录", dir_name);
+		mk_all_dir((char *)dir_name);
+		return 0;
+	}
+	/* read all the files in the dir ~ */
+	while ((filename = readdir(dir)) != NULL)
+	{
+		//INFO("%s find: %s", dir_name, filename->d_name);
+		// get rid of "." and ".."
+		if (strcmp(filename->d_name, ".") == 0 ||
+			strcmp(filename->d_name, "..") == 0)
+			continue;
+
+		string sFilename(filename->d_name);
+		string suffixStr = sFilename.substr(sFilename.find_last_of('.') + 1); //获取文件后缀
+
+		if (suffixStr.compare(extend_name) == 0)
+		{ //根据后缀筛选文件
+
+			// cout<<filename->d_name <<endl;
+			++number;
+			string st1 = dir_name;
+			string st2 = filename->d_name;
+			fileList.push_back(st1 + st2);
+			nameList.push_back(st2);
+		}
+	}
+	return number;
 }

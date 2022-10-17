@@ -29,7 +29,7 @@
 enum TCP_STEP{
     TCP_STEP_NULL = 0,
 
-    TCP_STEP_OPEN,
+    TCP_STEP_OPEN = 1,
     TCP_STEP_CONNECT,
     TCP_STEP_OPEN_ERROR,
     TCP_STEP_OPEN_OK,
@@ -70,6 +70,7 @@ public:
     TCP_STEP  lstep;
     int socketfd;
     bool opened = false;
+    bool closed = false;
 
     //链接，发送，接收 超时
     int connect_timeout_ms_max = 1000;
@@ -85,12 +86,12 @@ public:
     int  setport = 0;
 
     //发送缓冲
-    u8 sendbuffer[1024];
+    u8 sendbuffer[2048];
     int sendlen=0;
     int sendreconnect=0;
 
     //接受缓冲
-    u8 recvbuffer[1024];
+    u8 recvbuffer[2048];
     int recvwannlen=0;
     int recvlen=0;
 

@@ -157,7 +157,7 @@ void test_format(void)
 --------------------------------------------------------------------------------------*/
 l64 read_a_data(dfsm *dev, int index, int timeoutms, int *result)
 {
-  rtu_485 item = rtu.rs485[index - 1];
+  rtu_485 item = rtu.device.rs485[index - 1];
   INFO("[读传感器] %s, port=%s  baud=%d  name=%s cmd=%s result=%s datatype=%s formatter=%s 超时=%d ms",
        (const char *)item.factorType.data(),
        (const char *)item.port.data(),
@@ -260,17 +260,17 @@ void *thread_down_deal(void *arg)
     if (is_down(true))
     {
       //采样一次
-      for (int i = 0; i < rtu.rs485.size(); i++)
+      for (int i = 0; i < rtu.device.rs485.size(); i++)
       {
         DataClassItemConfig *pconfig;
         l64 value = 0;
         int returnValue = 0;
         bool result = false, clear = false;
         int index = 1 + i;
-        rtu_485 item = rtu.rs485[index - 1];
+        rtu_485 item = rtu.device.rs485[index - 1];
 
         // 选择下行通道
-        pdd = dfsm_device_find(rtu.rs485[i].port);
+        pdd = dfsm_device_find(rtu.device.rs485[i].port);
         if (pdd == NULL)
         {
           ERROR("[读传感器接口获取失败] %s port=%s  baud=%d  name=%s cmd=%s result=%s datatype=%s formatter=%s",

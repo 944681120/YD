@@ -42,7 +42,7 @@ void down_packet_process(void *arg)
         liushui |= packet->p.data[0];
         liushui <<= 8;
         liushui |= packet->p.data[1];
-        //set_current_liushui(liushui);
+        // set_current_liushui(liushui);
     }
     s->packet_flag = true;
     // center_process(s,&packet->p);
@@ -61,12 +61,12 @@ char *get_ip_port(int id, u8 *c)
     if (id < 0x04 || id > 0x0B)
         return NULL;
     int index = id - 0x04;
-    if (index > rtu.remote.size())
+    if (index > rtu.param.remote.size())
         return NULL;
-    if ((index / 2) > rtu.center.size())
+    if ((index / 2) > rtu.param.center.size())
         return NULL;
-    *c = rtu.center[index / 2];
-    return (char *)rtu.remote[index].c_str();
+    *c = rtu.param.center[index / 2];
+    return (char *)rtu.param.remote[index].c_str();
 }
 
 int get_yaosu(YaoSu *yaosu)
@@ -128,7 +128,6 @@ int get_sendmode(SendMode **sm)
     return -1;
 }
 
-
 // 上报处理
 void thread_up_poll(void)
 {
@@ -154,8 +153,8 @@ void *thread_up(void *arg)
     /*----------------------232----------------------------------*/
     char rate[20];
     char sport[50];
-    sprintf(rate, "%d", rtu.bdBaud);
-    serial_sendmode.config(&serial, (void *)rtu.bdSerialPort.data(), (void *)rate);
+    sprintf(rate, "%d", rtu.param.bdBaud);
+    serial_sendmode.config(&serial, (void *)rtu.param.bdSerialPort.data(), (void *)rate);
     // serial_sendmode.config(&serial,(void*)"/dev/ttyRS1",(void*)"115200");
     serial_sendmode.center = &down_packet_process;
     serial_sendmode.connect();

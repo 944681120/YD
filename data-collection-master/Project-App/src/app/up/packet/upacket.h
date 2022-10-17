@@ -4,7 +4,7 @@
 #include "lib.h"
 
 
-#define PDSIZE 1024
+#define PDSIZE 2048
 
 #pragma pack(1)
 
@@ -79,7 +79,7 @@ typedef enum{
       UPCMD_33H_JiabaoBao	=0x33,//	遥测站加报报	报送由时间或事件触发的加报实时数据	
       UPCMD_34H_XiaoshiBao	=0x34,//	遥测站小时报	报送以小时为基本单位的历史数据和实时数据	
       UPCMD_35H	=0x35,//	遥测站人工置数报	报送人工置数	
-      UPCMD_36H	=0x36,//	遥测站图片报或中心站查询遥测站图片采集信息	查询/报送	JPG
+      UPCMD_36H_Image	=0x36,//	遥测站图片报或中心站查询遥测站图片采集信息	查询/报送	JPG
       UPCMD_37H_shishi	=0x37,//	中心站查询遥测站实时数据		
       UPCMD_38H	=0x38,//	中心站查询遥测站时段数据	以小时为基本单位查询历史数据	
       UPCMD_39H	=0x39,//	中心站查询遥测站人工置数		
@@ -113,5 +113,6 @@ int upacket_encodehex_m3(UUPacket*packet,bool up, u8 remote, UPCMD cmd,int total
 
 
 const char*cmd_to_string(int cmd);
+const char*ext_to_string(int ext);
 
 #endif

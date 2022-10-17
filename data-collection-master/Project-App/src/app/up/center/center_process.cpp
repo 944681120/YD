@@ -24,7 +24,7 @@ int center_process(SendMode *s, UDPacket *packet)
     //比较 地址
     if (packet->rlocal != param[0x02].val)
     {
-        ERROR("地址错误, local=0x%llx packet=0x%llx",(unsigned long long) param[0x02].val, (unsigned long long)packet->rlocal);
+        ERROR("地址错误, local=0x%llx packet=0x%llx", (unsigned long long)param[0x02].val, (unsigned long long)packet->rlocal);
         return -1;
     }
 
@@ -45,19 +45,14 @@ int center_process(SendMode *s, UDPacket *packet)
     // packet 必须是下行包
     if ((packet->len & 0x8000) == 0x8000)
     {
-        // serial++
-        if (packet->cmd != UPCMD_2FH_LianluWeichiBao && ((u16)packet->cmd) >= 0x37)
-        {
-            extern int set_current_liushui(int);
-            s->seial_number++;
-            if (s->seial_number == 0)
-                s->seial_number = 1;
-            INFO("序列号++, 当前=%d ", s->seial_number);
-            set_current_liushui(s->seial_number);
-        }
-
         switch (packet->cmd)
         {
+        case UPCMD_36H_Image: //读图片
+        {
+            extern bool report_a_image();
+            report_a_image();
+        }
+        break;
         case UPCMD_37H_shishi: //中心站查询遥测站实时数据
             len = get_shishi_all(d);
             s->init(M4, get_current_remote(), (UPCMD)packet->cmd, d, len, PDSIZE);
@@ -168,10 +163,10 @@ int center_process(SendMode *s, UDPacket *packet)
             s->wait(WAITMS, NULL, NULL);
             break;
         default:
+            //丢掉数据，不处理
             break;
         }
     }
-
     INFO("[center]:exit,cmd=%s.", cmd_to_string(packet->cmd));
     return 0;
 }

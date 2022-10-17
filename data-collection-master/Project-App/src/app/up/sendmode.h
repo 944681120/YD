@@ -4,7 +4,7 @@
 #include "lib.h"
 #include "upacket.h"
 #include "mxdevice.h"
-
+#include "MultPacket.hpp"
 
 typedef enum{
     M1 = 5,   //发送，不应答
@@ -17,6 +17,7 @@ typedef enum{
 class SendMode
 {
     private:
+        MPBase *_imp;
         int get_sn_size(int sn);
         int m3_send(int sn,int ms);
     public:
@@ -55,7 +56,9 @@ class SendMode
         bool connect(void);
         bool isopen(void);
         void init(MXType _type, u8 _remote,UPCMD _cmd, u8* _data,int _len,int _size_per_packet);
+        void initMul(MXType _type, u8 _remote, UPCMD _cmd,MPBase*im3);
         int wait(int ms,Callback *to,Callback*get);
+        void onsend(UUPacket *sp,bool ok);
 
         DeviceState get_device_state(void);
 

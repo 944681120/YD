@@ -146,10 +146,10 @@ dfsm *dfsm_device_find(string s)
 
 void dfsm_device_init(void)
 {
-    for (int i = 0; i < rtu.rs485.size(); i++)
+    for (int i = 0; i < rtu.device.rs485.size(); i++)
     {
-        const char* p = rtu.rs485[i].port.data();
-        int band = rtu.rs485[i].baud;
+        const char* p = rtu.device.rs485[i].port.data();
+        int band = rtu.device.rs485[i].baud;
         if (dfsm_device_find(p) == NULL)
         {
             dfsm* pd = new dfsm();

@@ -105,11 +105,11 @@ int match(char *src, char *dst, int len)
 }
 int main(int argc, char *argv[])
 {
-    if (argc>1)
+    if (argc > 1)
     {
-        if(strcmp("--version",argv[1])==0)
+        if (strcmp("--version", argv[1]) == 0)
         {
-            printf("%s\n",VERSION_BUILD_TIME);
+            printf("%s\n", VERSION_BUILD_TIME);
             return 0;
         }
         return 0;
@@ -118,35 +118,35 @@ int main(int argc, char *argv[])
     int fd = 0;
     char buf[100];
     //开启守护进程
-//    daemon(0, 0);
+    //    daemon(0, 0);
     while (1)
     {
-        // //打开日志
-        // openlog(argv[0], LOG_CONS | LOG_PID, LOG_USER);
-        // //查看程序是否运行
-        // //新建输出文件
-        // system("touch " DIR_OUT_FILE);
-        // //获得程序ID
-        // system("ps -w|grep " NAME_FIND " >> " DIR_OUT_FILE);
-        // //打开输出文件
-        // fd = open(DIR_OUT_FILE, O_CREAT | O_RDONLY, 0777);
-        // //清空缓存
-        // memset(buf, 0, 100);
-        // //读取全部
-        // read(fd, buf, 100);
-        // //判断是否有程序文件运行
-        // if (match(buf, (char*)NAME, 90))
-        // {
-        //     syslog(LOG_INFO, "%s success!",NAME);
-        // }
-        // else
-        // {
-        //     syslog(LOG_INFO, "%s fail!",NAME);
-        //     //运行程序
-        //     system(RUN_NAME);
-        // }
-        // //删除输出文件
-        // system("rm " DIR_OUT_FILE);        
+        //打开日志
+        openlog(argv[0], LOG_CONS | LOG_PID, LOG_USER);
+        //查看程序是否运行
+        //新建输出文件
+        system("touch " DIR_OUT_FILE);
+        //获得程序ID
+        system("ps -w|grep " NAME_FIND " >> " DIR_OUT_FILE);
+        //打开输出文件
+        fd = open(DIR_OUT_FILE, O_CREAT | O_RDONLY, 0777);
+        //清空缓存
+        memset(buf, 0, 100);
+        //读取全部
+        read(fd, buf, 100);
+        //判断是否有程序文件运行
+        if (match(buf, (char *)NAME, 90))
+        {
+            syslog(LOG_INFO, "%s success!", NAME);
+        }
+        else
+        {
+            syslog(LOG_INFO, "%s fail!", NAME);
+            //运行程序
+            system(RUN_NAME);
+        }
+        //删除输出文件
+        system("rm " DIR_OUT_FILE);
         //休眠
         printf("wait...\n");
         sleep(5);
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
         {
             extern int updata_poll(int interval);
             updata_poll(5);
-        }                
+        }
     }
     //关闭日志
     closelog();

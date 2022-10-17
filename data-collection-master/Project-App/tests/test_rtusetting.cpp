@@ -1,8 +1,8 @@
-// #include "gtest/gtest.h"
+
 // #include "rtu_setting.hpp"
 // #include "DataClass.hpp"
 // #include "data_save.h"
-
+// #include "gtest/gtest.h"
 // TEST(TESTCASE, rtu)
 // {
 //     char*stopString = NULL;

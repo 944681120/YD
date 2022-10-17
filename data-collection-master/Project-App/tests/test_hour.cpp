@@ -78,8 +78,8 @@
 //                 set_observetime_time(std::time(0)-std::time(0)%3600);
 //                 xt = std::time(0) + 120;
 //                 devdata_save();
-//                 extern bool test_xiaoshi_enable ;
-//                 test_xiaoshi_enable = true;
+//                 //extern bool test_xiaoshi_enable ;
+//                 //test_xiaoshi_enable = true;
 //             }
 //         }
 //     }

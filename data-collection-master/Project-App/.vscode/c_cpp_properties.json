@@ -3,12 +3,16 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/usr/include/c++/7/experimental",
+                "/usr/include/c++/7/experimental",
+                "/usr/include/c++/7/experimental",
+                "/usr/include/c++/7/experimental"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "/home/kaihua/.bin/gcc",
             "cStandard": "gnu11",
-            "cppStandard": "gnu++14",
+            "cppStandard": "gnu++17",
             "intelliSenseMode": "linux-gcc-x64",
             "compilerArgs": [],
             "mergeConfigurations": false,

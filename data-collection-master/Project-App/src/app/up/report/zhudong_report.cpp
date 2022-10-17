@@ -6,6 +6,50 @@
 #include "Ibao.hpp"
 
 /*=================================================================
+    图片报
+===================================================================*/
+BaoImageBase image;
+
+bool _report_a_image(SendMode *sm)
+{
+    if (image.report_check(false))
+    {
+        const char *file = (const char *)image.report_data();
+        if (file != NULL)
+        {
+            MPBase *im3 = new MPImageBase(file, rtu.device.image.persize, std::time(0));
+            INFO("图片上报=====>方式:%s, 文件:%s", rtu.device.image.mode.c_str(), file);
+            if (rtu.device.image.mode == "M3" || rtu.device.image.mode == "m3")
+            {
+                sm->initMul(M3, get_current_remote(), UPCMD_36H_Image, im3);
+            }
+            else
+            {
+                sm->initMul(M2, get_current_remote(), UPCMD_36H_Image, im3);
+            }
+            if (sm->wait(4000, NULL, NULL) != 0)
+            {
+                ERROR("上传图片失败");
+                image.report_fail();
+            }
+            else
+            {
+                INFO("成功");
+                image.report_ok();
+            }
+            delete im3;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool report_a_image()
+{
+    return _report_a_image(&tcp_sendmode);
+}
+
+/*=================================================================
     定时，小时，加报，补报，统一流程控制 使用Ibao流程
 ===================================================================*/
 BaoBase dingshibao("定时报", {.cmd = (int)UPCMD_32H_DingshiBao,
@@ -35,7 +79,7 @@ RawBao lianlubao("链路报", get_lianlu_report);
 vector<Ibao *> baos = {
     &dingshibao, &xiaoshibao,
     &rainjiabao, &waterleveljiabao, &liuliangjiabao,
-    &bubao, &lianlubao};
+    &bubao, &lianlubao, &image};
 
 //清空所有数据表
 bool bao_clear(void)
@@ -68,13 +112,13 @@ static void bao_init(void)
     lianlubao.set_interval(lianlu_interval, -21, -20);
 
     /*设置上报数据项*/
-    dingshibao.set_report_ids(rtu.dingshi);
-    xiaoshibao.set_report_ids(rtu.xiaoshi);
-    rainjiabao.set_report_ids(rtu.jiabao["rain"]);
-    waterleveljiabao.set_report_ids(rtu.jiabao["waterlevel"]);
+    dingshibao.set_report_ids(rtu.param.dingshi);
+    xiaoshibao.set_report_ids(rtu.param.xiaoshi);
+    rainjiabao.set_report_ids(rtu.param.jiabao["rain"]);
+    waterleveljiabao.set_report_ids(rtu.param.jiabao["waterlevel"]);
 }
-static char buffer[1000];
-static char bufferstring[2000];
+static char buffer[4096];
+static char bufferstring[4096];
 static void bao_poll(SendMode *s)
 {
     for (int i = 0; i < baos.size(); i++)
@@ -84,11 +128,9 @@ static void bao_poll(SendMode *s)
         baos[i]->poll();
         if (baos[i]->report_check(false))
         {
-            INFO("%s -------正在上报------", baos[i]->name.c_str());
             int rs = baos[i]->report_data(buffer);
-            hexarray2str(buffer, rs, bufferstring, sizeof(bufferstring));
-            INFO("上报数据为:%s", bufferstring);
-
+            // hexarray2str(buffer, rs, bufferstring, sizeof(bufferstring));
+            // INFO("上报数据为:%s", bufferstring);
             if (s == &serial_sendmode)
             {
                 ERROR("端口未打开,转到补报");
@@ -97,37 +139,44 @@ static void bao_poll(SendMode *s)
             }
             else
             {
-                // serial number++
+                //上传图片
+                if (baos[i]->Cmd() == UPCMD_36H_Image)
                 {
-                    if (baos[i] != &lianlubao)
+                    report_a_image();
+                }
+                //上传其他数据
+                else
+                {
+                    // report data
+                    INFO("%s ===============>正在上报<=============", baos[i]->name.c_str());
+                    int rs = baos[i]->report_data(buffer);
+                    hexarray2str(buffer, rs, bufferstring, sizeof(bufferstring));
+                    INFO("上报数据为:%s", bufferstring);
+                    if (baos[i] == &lianlubao)
                     {
-                        extern int set_current_liushui(int);
-                        s->seial_number++;
-                        if (s->seial_number == 0)
-                            s->seial_number = 1;
-                        INFO("序列号++, 当前=%d ", s->seial_number);
-                        set_current_liushui(s->seial_number);
+                        if (rtu.device.gz.link_mode == "M2" || rtu.device.gz.link_mode == "m2")
+                        {
+                            s->init(M2, get_current_remote(), UPCMD_2FH_LianluWeichiBao, (u8 *)buffer, rs, rs);
+                        }
+                        else
+                        {
+                            s->init(M1, get_current_remote(), UPCMD_2FH_LianluWeichiBao, (u8 *)buffer, rs, rs);
+                        }
                     }
-                }
-                // report data
-                int rs = baos[i]->report_data(buffer);
-                hexarray2str(buffer, rs, bufferstring, sizeof(bufferstring));
-                INFO("上报数据为:%s", bufferstring);
-                if (baos[i] == &lianlubao)
-                    s->init(M1, get_current_remote(), UPCMD_2FH_LianluWeichiBao, (u8 *)buffer, rs, rs);
 
-                else
-                    s->init(M2, get_current_remote(), baos[i]->Cmd(), (u8 *)buffer, rs, rs);
-                if (s->wait(2000, NULL, NULL) != 0)
-                {
-                    ERROR("上报失败,转到补报");
-                    baos[i]->report_fail();
+                    else
+                        s->init(M2, get_current_remote(), baos[i]->Cmd(), (u8 *)buffer, rs, rs);
+                    if (s->wait(2000, NULL, NULL) != 0)
+                    {
+                        ERROR("上报失败,转到补报");
+                        baos[i]->report_fail();
+                    }
+                    else
+                    {
+                        baos[i]->report_ok();
+                    }
+                    baos[i]->report_check(true);
                 }
-                else
-                {
-                    baos[i]->report_ok();
-                }
-                baos[i]->report_check(true);
             }
         }
     }
@@ -165,18 +214,22 @@ int communication_state(SendMode *sm)
         {
             sm->dev->keepalive(true);
             sm->utimeout = get_ms_clock() + 600000;
+            INFO("收到 EXT_EOT,关闭连接,目前默认 keepalive.");
         }
         break;
         //退出通讯
         case ETX_EOT:
         {
-            sm->dev->keepalive(false);
-            sm->utimeout = get_ms_clock() + 600000;
+            INFO("收到 EXT_EOT,关闭连接,目前默认 keepalive.");
+            // sm->dev->keepalive(false);
+            // sm->dev->close(NULL);
+            sm->utimeout = 0;
         }
         break;
         default:
             break;
         }
+        sm->etx = ETX_NULL;
     }
     else
     {
@@ -187,8 +240,13 @@ int communication_state(SendMode *sm)
             //关掉通道
             if ((get_work_state() == M1 || get_work_state() == M2) && sm->utimeout != 0)
             {
-                sm->dev->keepalive(false);
-                sm->dev->close(NULL);
+                if (sm->dev->is_open())
+                {
+                    INFO("收到 EXT_EOT,关闭连接,目前默认 keepalive.");
+                    // INFO("无操作,10min 断网");
+                    // sm->dev->keepalive(false);
+                    // sm->dev->close(NULL);
+                }
             }
             sm->utimeout = get_ms_clock() + 600000;
         }

@@ -71,7 +71,7 @@ echo "=====================4.打包==========================="
 if test "pc" = $1;then
 ../tools/deb.sh pc
 else
-../tools/deb.sh
+../tools/deb.sh arm
 fi
 
 

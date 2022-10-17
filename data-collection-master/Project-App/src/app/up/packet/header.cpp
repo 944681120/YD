@@ -16,9 +16,11 @@ u8 set_current_remote(u8 r)
 }
 
 //=====================================
-static int current_liushui = 0;
+static int current_liushui = 1;
 int get_current_liushui(void)
 {
+    if (current_liushui == 0)
+        current_liushui = 1;
     return current_liushui;
 }
 int set_current_liushui(int liu)
@@ -80,6 +82,23 @@ Header::Header()
     this->type = (u8)param["terminalType"].val; //自定义 遥测站分类码
 }
 Header::~Header() {}
+int Header::add_extbytes(u8 *d)
+{
+    //广州:添加 版本信息 + rtu序号
+    if (rtu.device.gz.enable)
+    {
+        char buffer[10];
+        param[0xFFA1].toreport(buffer);
+        memcpy(d, buffer, 2);
+        memcpy(d + 2, buffer + 3, 2);
+        d += 4;
+        param[0xFF9F].toreport(buffer);
+        memcpy(d, buffer, 2);
+        memcpy(d + 2, buffer + 3, 2);
+        return 8;
+    }
+    return 0;
+}
 int Header::to_array(u8 *d)
 {
     ul64 tmp = 0;
@@ -110,6 +129,10 @@ int Header::to_array(u8 *d)
     d++;
     tmp = get_time_bcd(observetime);
     d += blreverse((((u8 *)&tmp) + 1), d, 5);
+
+    // 6.固定地额外数据
+    d += add_extbytes(d);
+
     return (int)(d - start);
 }
 
@@ -132,6 +155,8 @@ int Header::to_array_front3(u8 *d)
     // hex2bigbcd((u8 *)&tmp, 5);
     // memcpy(d, &tmp, 5);
     d += 5;
+    // 4.固定地额外数据
+    d += add_extbytes(d);
     return (int)(d - start);
 }
 

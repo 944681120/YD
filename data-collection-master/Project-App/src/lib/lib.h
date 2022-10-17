@@ -39,8 +39,9 @@ typedef void Callback(void *);
 
 void TimeSet(int year, int month, int day, int hour, int min, int sec);
 void TimeSet(string str);
+void TimeSet(time_t t);
 void inverse(u8 *data, int len);
-void inverseto(u8 *data,u8*dataout,int len);
+void inverseto(u8 *data, u8 *dataout, int len);
 
 char *get_time(time_t t);
 char *get_cur_time();
@@ -190,15 +191,15 @@ int mk_all_dir(char *dir);
   {                                                                    \
     u8 *__data = (u8 *)(a__data);                                      \
     int __size = (int)(a__size);                                       \
-    char __buffer[1024];                                               \
+    char __buffer[4096];                                               \
     memset(__buffer, 0, sizeof(__buffer));                             \
     sprintf(__buffer, "[" a__header "]", ##__VA_ARGS__);               \
     sprintf(__buffer + strlen(__buffer), ":len=%d ,", __size);         \
     int __iii = 0;                                                     \
     int __offset = strlen(__buffer);                                   \
-    while (__iii < __size && __iii < 512)                              \
+    while (__iii < __size && __iii < (sizeof(__buffer) / 2))           \
     {                                                                  \
-      sprintf(__buffer + __offset + __iii * 2, "%02x", __data[__iii]); \
+      sprintf(__buffer + __offset + __iii * 2, "%02X", __data[__iii]); \
       __iii++;                                                         \
     }                                                                  \
     zlog_info(zcat, "%s", __buffer);                                   \
@@ -217,5 +218,8 @@ std::vector<std::string> split(std::string str, std::string pattern);
 
 std::string list_merge(std::vector<std::string> list, std::string parttern);
 #include "DataClass.hpp"
+
+
+long findfileinfolder(const char *dir_name, string extend_name, std::vector<std::string> &fileList, std::vector<std::string> &nameList);
 
 #endif

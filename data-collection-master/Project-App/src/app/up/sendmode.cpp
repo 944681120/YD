@@ -37,7 +37,9 @@ void *up_packet_process(void *ss, u8 *data, int len)
             s->center(s);
         }
     }
-    return upacket_decode(&s->down, NULL, 0, true);
+    upacket_decode(&s->down, NULL, 0, true);
+
+    return (void *)1;
 }
 
 DeviceState SendMode::get_device_state(void)
@@ -66,8 +68,26 @@ int SendMode::get_sn_size(int sn)
 int SendMode::m3_send(int sn, int ms)
 {
     int nowlen = get_sn_size(sn);
-    //分包发送
-    u8 *d = &this->data[(sn - 1) * this->psize];
+    u8 *d = NULL;
+    if (_imp == NULL)
+    {
+        d = &this->data[(sn - 1) * this->psize];
+    }
+    else
+    {
+        //读取数据
+        int actlen = _imp->reportdata((sn - 1) * this->psize, nowlen, _imp->buffer);
+        if (actlen == 0)
+        {
+            ERROR("_imp,读取不到数据发送");
+            return 0;
+        }
+        //分包发送
+        // u8 *d = &this->data[(sn - 1) * this->psize];
+        nowlen = actlen;
+        d = (u8 *)_imp->buffer;
+    }
+
     this->get_packet = false;
 
     // 采用 HEX 码。高 12 位表示包总数，低 12 位表示本次发 送数据包的序列号，范围为 1～4095。
@@ -108,14 +128,18 @@ void SendMode::config(MxDevice *mx, void *ds, void *da)
 
 void SendMode::init(MXType _type, u8 _remote, UPCMD _cmd, u8 *_data, int _len, int _size_per_packet)
 {
+    this->_imp = NULL;
     this->type = _type;
     this->data = _data;
 
     this->psize = _size_per_packet;
     this->cmd = _cmd;
     this->remote = _remote;
-    if ((_len + 16) > PDSIZE)
-        _len = PDSIZE - 16;
+    if (_len == _size_per_packet) //不分包时
+    {
+        if ((_len + 16) > PDSIZE)
+            _len = PDSIZE - 16;
+    }
     // memcpy(this->up.data,data,_len);
     this->len = _len;
     if (_len <= 0)
@@ -125,6 +149,13 @@ void SendMode::init(MXType _type, u8 _remote, UPCMD _cmd, u8 *_data, int _len, i
         this->packet_count = 1;
 }
 
+void SendMode::initMul(MXType _type, u8 _remote, UPCMD _cmd, MPBase *imp)
+{
+    int _len = imp->size();
+    this->init(_type, _remote, _cmd, (u8 *)imp->buffer, _len, imp->persize);
+    this->_imp = imp;
+}
+
 bool SendMode::connect(void)
 {
     bool r = this->dev->open(this->devstring);
@@ -132,6 +163,19 @@ bool SendMode::connect(void)
     return r;
 }
 
+void SendMode::onsend(UUPacket *sp, bool ok)
+{
+    extern int get_current_liushui(void);
+    extern int set_current_liushui(int liu);
+    int p = get_current_liushui();
+    p++;
+    p &= 0xFFFF;
+    if (p == 0)
+        p = 1;
+    this->seial_number = p;
+    INFO("序列号++, 发送=%d, 当前(下一包)=%d ", get_current_liushui(), p);
+    set_current_liushui(p);
+}
 //流程控制
 // 0:ok  -1:timeout  -2:error
 int SendMode::wait(int ms, Callback *to, Callback *get)
@@ -152,9 +196,12 @@ int SendMode::wait(int ms, Callback *to, Callback *get)
             if (this->dev->is_send_end())
             {
                 INFO("[M1]:return 0");
+                if (this->cmd != UPCMD_2FH_LianluWeichiBao) //链路报没有下行，sn不++
+                    this->onsend(&this->up, true);
                 return 0;
             }
         }
+        this->onsend(&this->up, false);
         INFO("[M1]:return -1");
         return -1;
     }
@@ -170,12 +217,40 @@ int SendMode::wait(int ms, Callback *to, Callback *get)
             int nowsize = get_sn_size(c + 1);
             int retry = 3;
             //分包发送
-            u8 *d = &this->data[c * this->psize];
+            u8 *d = NULL;
+            if (_imp == NULL)
+                d = &this->data[c * this->psize];
+            else
+            {
+                //读取数据
+                int actlen = _imp->reportdata(c * this->psize, nowsize, _imp->buffer);
+                if (actlen == 0)
+                {
+                    ERROR("_imp,读取不到数据发送");
+                    return 0;
+                }
+                //分包发送
+                // u8 *d = &this->data[(sn - 1) * this->psize];
+                nowsize = actlen;
+                d = (u8 *)_imp->buffer;
+            }
             int t = 0;
             this->get_packet = false;
-            int dlen = upacket_encodehex(&this->up, true, this->remote, this->cmd, d, nowsize,
+            int dlen = 0;
+            //不分包
+            if (packet_count == 1)
+            {
+                dlen = upacket_encodehex(&this->up, true, this->remote, this->cmd, d, nowsize,
                                          (this->packet_count == 1) ? STX_STX : STX_SYN,
                                          (c == (this->packet_count - 1)) ? ETX_ETX : ETX_ETB);
+            }
+            else
+            {
+                dlen = upacket_encodehex_m3(&this->up, true, this->remote, this->cmd, this->packet_count, c + 1, d, nowsize,
+                                            (this->packet_count == 1) ? STX_STX : STX_SYN,
+                                            (c == (this->packet_count - 1)) ? ETX_ETX : ETX_ETB);
+            }
+            this->onsend(&this->up, true);
             c++;
             result = 0;
             while (retry > 0)
@@ -208,11 +283,11 @@ int SendMode::wait(int ms, Callback *to, Callback *get)
                     if (this->etx == ETX_EOT || this->etx == ETX_ESC)
                     {
 
-                        INFO("[%s] get etx=%s,return 0.", (type == M2 ? "M2" : "M4"), (this->etx == ETX_EOT) ? "EOT" : "ESC");
+                        INFO("[%s] %s,return 0.", (type == M2 ? "M2" : "M4"), ext_to_string(this->etx));
                         return 0;
                     }
                     result = 0;
-                    INFO("[%s] get etx=%02x,return 0.", (type == M2 ? "M2" : "M4"), this->etx);
+                    INFO("[%s] %s return 0.", (type == M2 ? "M2" : "M4"), ext_to_string(this->etx));
                     break;
                 }
                 //超时
@@ -252,6 +327,7 @@ int SendMode::wait(int ms, Callback *to, Callback *get)
         while (c < this->packet_count)
         {
             int r = m3_send(c + 1, ms);
+            this->onsend(&this->up, true);
             if (r < 0)
                 return -1; //链路超时
             c++;
@@ -271,19 +347,19 @@ int SendMode::wait(int ms, Callback *to, Callback *get)
                 }
 
                 //收到的必须是 EOT NAK包
-                u8 EOT = this->packet.p.etx;
-                if (EOF == ETX_EOT)
+                ETX eot = (ETX)this->packet.p.etx;
+                if (eot == ETX_EOT)
                 {
                     INFO("[M3] recv EOT. cmd=%02x, len=%d, count=%d", this->cmd, this->len, packet_count);
                     return 0; //发送成功
                 }
-                if (EOT == ETX_ESC)
+                if (eot == ETX_ESC)
                 {
                     INFO("[M3] recv ESC. cmd=%02x, len=%d, count=%d", this->cmd, this->len, packet_count);
                     return 0; //发送成功
                 }
                 //收到 NAK 重发
-                if (EOT == ETX_NAK && this->packet.p.cmd == this->cmd)
+                if (eot == ETX_NAK && this->packet.p.cmd == this->cmd)
                 {
                     //重发 nak包
                     u32 tmp = 0;

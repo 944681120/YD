@@ -104,7 +104,6 @@ int di_poll(int fd, char *name)
         if (FD_ISSET(fd, &rfds))
         {
             int iDataLen = read(fd, &ucDioCfg, sizeof(ucDioCfg));
-            
             if (0 > iDataLen)
             {
                 ERROR("[di-poll] %s : open fail", name);

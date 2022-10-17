@@ -30,6 +30,7 @@ public:
 
     //上报记录数据
     virtual int report_data(char *dataout) = 0;
+    void *report_data() { return NULL; }
 
     //失败补报
     virtual bool report_fail() = 0;
@@ -54,6 +55,7 @@ struct BaoBaseParam
     string triglename;
     string warnname;
 };
+
 /*==========================流程控制========================
 BaoBase: 周期性上报
 1.检测是否要保存记录
@@ -414,6 +416,7 @@ public:
 
         if (!report_log.empty())
         {
+            record_time = obtime;   //观测时间，就是record时间
             return BaoBase::report_data(dataout);
         }
 
@@ -422,5 +425,166 @@ public:
     bool record() override
     {
         return true;
+    }
+};
+
+//图片报，用于拍照，上传数据图片，结合 MPImageBase 使用，实现分包上报
+#include <map>
+class BaoImageBase : public Ibao
+{
+
+private:
+    std::vector<std::string> fileList;
+    std::vector<std::string> nameList;
+    map<std::string, time_t> TimeoutfileList;
+    string _info = "";
+
+public:
+    BaoImageBase()
+    {
+        name = "图片报";
+    }
+    ~BaoImageBase() {}
+
+    bool record_check()
+    {
+        return false;
+    }
+
+    bool record()
+    {
+        return true;
+    }
+
+    //上报检测
+    bool report_check(bool reset)
+    {
+        if (fileList.size() == 0)
+        {
+            string dir = rtu.device.image.dir;
+            if (dir.size() > 0)
+            {
+                if (dir[dir.size() - 1] != '/')
+                {
+                    dir = dir + "/";
+                }
+                int cnt = findfileinfolder(dir.c_str(), "jpg", fileList, nameList);
+                if (cnt != 0)
+                {
+                    _info = "";
+                    //INFO("图片报，当前图片个数:%d", cnt);
+                    return true;
+                }
+                else
+                {
+                    if (_info == "")
+                    {
+                        _info = "Has no images";
+                        INFO("当前目录无图片上报:%s", dir.c_str());
+                    }
+                }
+            }
+            return false;
+        }
+        else
+            return true;
+    }
+
+    //上报记录数据
+    int report_data(char *dataout) { return 0; }
+    void *report_data()
+    {
+        // 1. 当前文件如果在 失败列表，就要等待超时才可以上报
+        bool get = false;
+        string s;
+        while (fileList.size() > 0)
+        {
+            s = fileList.back();
+
+            if(rtu.device.image.retry_delays==0 || TimeoutfileList.size() == 0)
+            {
+                return (void*)fileList.back().c_str();
+            }
+            else
+            {
+                map<string, time_t>::iterator iter;
+                iter = TimeoutfileList.find(s);
+                if (iter == TimeoutfileList.end())
+                {
+                    return (void*)fileList.back().c_str();
+                }
+                else
+                {
+                    time_t lasttime = (time_t)iter->second;
+                    time_t delays = rtu.device.image.retry_delays;
+                    // 10分钟
+                    if (delays < 30)
+                        delays = 600;
+                    if (abs(std::time(0) - lasttime) > delays)
+                    {
+                        INFO("时间到: timeout=%d, 重传文件:%s", (int)delays, s.c_str());
+                        return (void*)fileList.back().c_str();
+                    }
+                    else
+                    {
+                        fileList.pop_back();
+                        continue;
+                    }
+                }
+            }
+        }
+        return NULL;
+    }
+
+    //失败补报
+    bool report_fail()
+    {
+        if (fileList.size() > 0)
+        {
+            if (rtu.device.image.retry_delays == 0)
+            {
+                return report_ok();
+            }
+            else
+            {
+                //删除文件
+                string str = fileList.back();
+                INFO("上报失败，文件等待重新上报:%s", str.c_str());
+                TimeoutfileList[str] = std::time(0);
+                fileList.pop_back();
+            }
+        }
+    }
+    bool report_ok()
+    {
+        if (fileList.size() > 0)
+        {
+            //删除文件
+            const char *file = fileList.back().c_str();
+            TimeoutfileList.erase(fileList.back());
+            remove(file);
+            fileList.pop_back();
+        }
+
+        return true;
+    }
+
+    // run 1 second
+    bool poll()
+    {
+        return false;
+    }
+
+    // cmd
+    UPCMD Cmd()
+    {
+        return UPCMD_36H_Image;
+    }
+
+    // clear all
+    bool clearAll()
+    {
+        //清空图片记录与缓存
+        return false;
     }
 };

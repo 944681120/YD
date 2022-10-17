@@ -19,7 +19,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-
 void *tcp_receive_send_thread(void *arg);
 void *tcp_receive_packet_thread(void *arg);
 
@@ -53,6 +52,7 @@ int tcp_client::config(const char *ip, int port)
 
 int tcp_client::start(void *arg)
 {
+    this->closed = false;
     if (this->pfd)
         pthread_cancel(this->pfd);
     int ret = pthread_create(&this->pfd, NULL, tcp_receive_send_thread, this);
@@ -85,6 +85,9 @@ int tcp_client::quit(void)
         pthread_cancel(this->ppfd);
     this->pfd = 0;
     this->socketfd = 0;
+    this->closed = true;
+    this->step = TCP_STEP_NULL;
+    INFO("关闭tcp连接");
     return 0;
 }
 
@@ -325,7 +328,7 @@ void tcp_client::tcp_state_function(void)
         if (this->reconnect < 65535)
             this->reconnect++;
         //重连
-        if (this->keep || this->sendlen > 0)
+        if ((this->keep || this->sendlen > 0) && this->closed != true)
             this->step = TCP_STEP_OPEN;
         else
             this->step = TCP_STEP_NULL;
@@ -355,10 +358,10 @@ void *tcp_receive_send_thread(void *arg)
         // printf("tcp_receive_send_thread:step=%d",c->step);
         // if(counter++>100)
         {
-            static int step = 0;
-            if (step != c->step)
+            static int sssstep = 0;
+            if (sssstep != c->step)
             {
-                step = c->step;
+                sssstep = c->step;
                 INFO("[tcp_state_function]: step=%d", c->step);
             }
             counter = 0;
@@ -377,10 +380,12 @@ void *tcp_receive_packet_thread(void *arg)
         {
             c->ppfd_get = false;
             if (c->packet != NULL)
+            {
                 if (c->packet(c->user, c->recvbuffer, c->recvlen) != NULL)
                 {
                     c->recv_timeout = get_ms_clock() + c->recv_timeout_ms_max;
                 }
+            }
             c->recvlen = 0;
         }
         usleep(1000);

@@ -57,6 +57,20 @@
         "set": "cpp",
         "string": "cpp",
         "gtest.h": "c",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "filesystem": "cpp",
+        "*.ipp": "cpp",
+        "future": "cpp",
+        "bitset": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "csignal": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "regex": "cpp",
+        "source_location": "cpp",
+        "shared_mutex": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     }
 }
