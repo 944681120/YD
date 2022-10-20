@@ -1,0 +1,121 @@
+{
+	"logsmax_5min":30,
+	"terminalNo":"9900000001",
+	"terminalType":75,
+	"model":"normal",
+	"passwd":"1234",
+	"center":[1,2,3],
+	"remote":["120.238.064.059:33048","192.168.2.2:9090","192.168.2.10:9091"],
+	"bdSerialPort":"/dev/tty1",
+	"bdBaud":115200,
+	"shishi":["PJ","PT","QA","Q","Z"],
+	"dingshi":["QA","Q","PJ","PT","VT"],
+	"xiaoshi":["PT","P1","DRP","VT","Q","Z"],
+	"jiabao":{
+		 "rain":["PT","P1","DRP"],
+		 "waterlevel":["Z1","DRZ1"],
+			 "liuliang":["Q1"]
+	 },
+	"ntp":{
+		   "server":"ntp.aliyun.com",
+		   "port":123,
+		   "interval":15,
+		   "timeout":5
+	},
+	"image":{
+		   "dir":"/home/kaihua/Desktop/images/test",
+		   "persize":1024
+	},
+	"rs485":[
+	 {
+		 "factorType":"Q1",
+		 "port":"/dev/ttyRS1",
+		 "baud":9600,
+		 "brandName":"建恒DCT 1188/1158",
+		 "requestCmd":"01030008000245C9",
+		 "resultDataFilter":"010304",
+		 "dataType":"int",
+		 "dataFormatter":"CDAB"						   		
+	 },
+	 {
+		"baud": 9600,
+		"brandName": "徐州海河",
+		"dataFormatter": "AB",
+		"dataType": "int",
+		"factorType": "Z1",
+		"port": "/dev/ttyRS2",
+		"requestCmd": "010300000001840A",
+		"resultDataFilter": "010302"	   	
+	 }
+	],
+   "ftp":{
+	 "enable":1,
+	 "ip":"192.168.3.223",
+	 "user":"kaihua",
+	 "password":"111111",
+	 "downdir":"/app-cjq",
+	 "serverdir":"ftp",
+	 "interval":60
+   },
+ 
+   "runtime":{
+	 "DingShiInterval":1,
+	 "JiaBaoInterval":5,
+	 "RainDayStartTime":8,
+	 "SampleInterval":60,
+	 "RainResolution":1,
+	 "RainAlarm":10,
+		 "FlowAlarm":470,
+	 "WaterLevelBase1":1,
+	 "WaterLevelBase2":2,
+	 "WaterLevelBase3":0,
+	 "WaterLevelBase4":0,
+	 "WaterLevelBase5":0,
+	 "WaterLevelBase6":0,
+	 "WaterLevelBase7":0,
+	 "WaterLevelBase8":0,
+	 "WaterLevelFix1":11,
+	 "WaterLevelFix2":22,
+	 "WaterLevelFix3":0,
+	 "WaterLevelFix4":0,
+	 "WaterLevelFix5":0,
+	 "WaterLevelFix6":0,
+	 "WaterLevelFix7":0,
+	 "WaterLevelFix8":0,
+	 "WaterLevelAlarm1":10,
+	 "WaterLevelAlarm2":9999,
+	 "WaterLevelAlarm3":9999,
+	 "WaterLevelAlarm4":9999,
+	 "WaterLevelAlarm5":9999,
+	 "WaterLevelAlarm6":9999,
+	 "WaterLevelAlarm7":9999,
+	 "WaterLevelAlarm8":9999,
+	 "WaterLevelAlarmUp":12,
+	 "WaterLevelAlarmDown":5,
+		 "heartBreak":30
+ },
+   "personalset":{"FL":"12345"}
+ }
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

@@ -6,9 +6,9 @@ int get_lianlu_report(u8 *dataout)
 {
     Header h;
     char buffer[20];
-    h.to_array_front3((u8 *)buffer);
-    memcpy(dataout, buffer, 8);
-    return 8;
+    int size = h.to_array_front3((u8 *)buffer);
+    memcpy(dataout, buffer, size);
+    return size;
 }
 
 /*=============================测试报===========================*/
