@@ -554,6 +554,8 @@ public:
                 fileList.pop_back();
             }
         }
+
+        return true;
     }
     bool report_ok()
     {

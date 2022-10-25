@@ -24,7 +24,7 @@ cmake CMakeLists.txt -DCMAKE_TOOLCHAIN_FILE=cross.cmake -DBUILDUSING_GTEST=OFF
 echo "arm zlog 拷贝"
 cp  ./readme/lib/arm/*  /usr/lib/
 fi
-make
+make -j12
 
 #删除一些产生的文件
 rm -rf CMakeFiles

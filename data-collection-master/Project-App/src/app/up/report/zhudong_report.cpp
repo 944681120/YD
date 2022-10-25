@@ -97,7 +97,7 @@ static void bao_init(void)
 {
 
     /*设置报文时间,具体从 runtime中读取*/
-    int dingshi_interval = runtime[0x20].Value() * 3600;
+    int dingshi_interval = runtime[0x20].Value() * 60;  //定时报的时间单位为 min
     int xiaoshi_interval = 60 * 60;
     int jiabao_interval = runtime[0x21].Value() * 60;
     int bubao_interval = 15 * 60;

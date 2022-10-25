@@ -32,11 +32,11 @@ void* doctrl_thread(void *arg)
         return nullptr;
     }
 
-    for (auto iter = jStr.begin(); iter != jStr.end(); iter++) 
-    {
-        strstream << iter.key() << ":" << iter.value() << std::endl;
-        jStr[iter.key().c_str()] = iter.value();
-    }
+    // for (auto iter = jStr.begin(); iter != jStr.end(); iter++) 
+    // {
+    //     strstream << iter.key() << ":" << iter.value() << std::endl;
+    //     jStr[iter.key().c_str()] = iter.value();
+    // }
 
     do_s.duration = jStr["duration"];
     for (auto iter = jStr["start_time"].begin(); iter != jStr["start_time"].end(); iter++) 
@@ -44,6 +44,10 @@ void* doctrl_thread(void *arg)
         do_s.openTime.push_back(iter.value().as_integer() % 24);
         INFO("[do] do高电平时间:%d", iter.value().as_integer() % 24);
     }
+
+    system("echo 1D > /dev/ido_do");    //上电DO1低电平10s后边高电平
+    system("echo 2E > /dev/ido_do");    //DO2高电平10s后再根据实际情况变化电平
+    sleep(10);
 
     system("echo 1E > /dev/ido_do");    //DO1高电平
     while (1)
@@ -55,7 +59,7 @@ void* doctrl_thread(void *arg)
         {
             if ( *iter == timenow->tm_hour )
             {
-                if ( timenow->tm_min == 0 && timenow->tm_sec == 0 )
+                if ( timenow->tm_min*60 + timenow->tm_sec <= 3 )
                 {
                     system("echo 2E > /dev/ido_do");    //DO2高电平
                     INFO("[do2] 输出高电平");

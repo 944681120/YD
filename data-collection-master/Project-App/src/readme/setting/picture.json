@@ -1,0 +1,16 @@
+{
+    "account" : "admin",
+    "password" : "Yd87356212",
+    "picture_ip" : "10.0.2.5",
+    "picture_dir" : "/images",
+    "picture_name" : "test",
+    "capture": 0,
+    "shift_time" : 240,
+    "start_time" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 ]
+}
+
+// {
+//     "capture": 0,    //0 不抓拍 1立马抓拍
+//     "shift_time" :   //偏移多次时间拍照
+//     "start_time" :   //正点时间准备拍照  //拍照时间== start_time(小时) + shift_time(秒)
+// }

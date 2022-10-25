@@ -8,6 +8,7 @@
 #define __APP_DEBUG__
 #include "cfgChange.h"
 #include "dev_do.h"
+#include "Capture.h"
 
 // thread_t
 pthread_t all_threads[10];
@@ -46,6 +47,7 @@ int app_main(int argc, char **argv, bool zloginit)
     
     all_threads[count_threads++] = thread_cfgChange_init();
     all_threads[count_threads++] = thread_doctrl_init();
+    all_threads[count_threads++] = thread_picturectrl_init();
 
     pthread_join(all_threads[0], NULL);
     ERROR("%s", "=======================退出==========================");
