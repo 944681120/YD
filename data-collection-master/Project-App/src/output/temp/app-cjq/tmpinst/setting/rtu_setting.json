@@ -21,7 +21,7 @@
 		"requestCmd":"010300040001C5CB",
 		"resultDataFilter":"010302",
 		"dataType":"int",
-		"dataFormatter":"AB"						   		
+		"dataFormatter":"AB"
 	 },
             {
                 "baud": 9600,

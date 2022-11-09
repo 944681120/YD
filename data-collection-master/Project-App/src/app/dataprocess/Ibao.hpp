@@ -360,7 +360,7 @@ public:
         // if (record_enable == false && Cycle_Check(std::time(0), record_seconds, record_delays))
         if (record_enable == false && Check_Time(&this->last_record_check_time, std::time(0), record_seconds, record_delays))
         {
-            INFO("[上报检测]  %s ,周期=%d,记录时间:%d,上报时间:%d", this->name.c_str(), record_seconds, record_delays, report_delays);
+            INFO("[上报检测]  %s, 周期=%d,记录时间:%d,上报时间:%d", this->name.c_str(), record_seconds, record_delays, report_delays);
             //倒序,一条一条来报
             msgs.clear();
             db_bu->find("valid!=0 LIMIT 1", msgs);

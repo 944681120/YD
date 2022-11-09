@@ -14,7 +14,7 @@ using namespace configor;
 #define PATH_CFG_JPG "/app-cjq/setting/picture.json"
 #define FORMAT_HTTP_JGP "wget -O %s/%s.jpg -o /dev/null \'http://%s:%s@%s/cgi-bin/snapshot.cgi\'"
 // #define FORMAT_HTTP_JGP "wget -O %s/%s.jpg -o /dev/null \'http://%s:%s@%s/onvifsnapshot/media_service/snapshot?channel=1&subtype=0\'"
-// http://admin:Yd87356212@10.0.2.5/onvifsnapshot/media_service/snapshot?channel=1&subtype=0
+// wget -O 111.jpg 'http://admin:Yd87356212@192.168.1.10/cgi-bin/snapshot.cgi'
 
 typedef struct DEV_CAPTURE_CONFIG_S
 {
@@ -113,13 +113,15 @@ void* picturectrl_thread(void *arg)
         if ( Capt_s.captureFlg == 1 )
         {
             char test[] = "_00";
+            char mvcmd[64] = {0};
             static int i = 0;
             i++;
             test[1] += i/10;
             test[2] += i%10;
             Capt_s.captureFlg = 0;
             char cmd[512] = {0};
-            sprintf(cmd, FORMAT_HTTP_JGP, Capt_s.picture_dir.c_str(), (Capt_s.picture_name + test).c_str(),  Capt_s.account.c_str(), Capt_s.password.c_str(), Capt_s.picture_ip.c_str());
+            // sprintf(cmd, FORMAT_HTTP_JGP, Capt_s.picture_dir.c_str(), (Capt_s.picture_name + test).c_str(),  Capt_s.account.c_str(), Capt_s.password.c_str(), Capt_s.picture_ip.c_str());
+            sprintf(cmd, FORMAT_HTTP_JGP, "/tmp", (Capt_s.picture_name + test).c_str(),  Capt_s.account.c_str(), Capt_s.password.c_str(), Capt_s.picture_ip.c_str());
             INFO("[拍照命令]:cmd = %s", cmd);
             system(cmd);
 
@@ -129,6 +131,10 @@ void* picturectrl_thread(void *arg)
                 std::ofstream ofs(PATH_CFG_JPG);
                 ofs << std::setw(4) << jStr << std::endl;
             }
+
+            sleep(3);
+            sprintf(mvcmd, "mv /tmp/%s.jpg %s", (Capt_s.picture_name + test).c_str(), Capt_s.picture_dir.c_str());
+            system(mvcmd);
         }
 
         sleep(1);
