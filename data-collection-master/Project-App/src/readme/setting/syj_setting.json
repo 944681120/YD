@@ -1,0 +1,194 @@
+{
+    "water_ch1" : {
+        "describe": "渗压计 通道1 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch2" : {
+        "describe": "渗压计 通道2 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch3" : {
+        "describe": "渗压计 通道3 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch4" : {
+        "describe": "渗压计 通道4 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch5" : {
+        "describe": "渗压计 通道5 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch6" : {
+        "describe": "渗压计 通道6 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch7" : {
+        "describe": "渗压计 通道7 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch8" : {
+        "describe": "渗压计 通道8 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch9" : {
+        "describe": "渗压计 通道9 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch10" : {
+        "describe": "渗压计 通道10 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch11" : {
+        "describe": "渗压计 通道11 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch12" : {
+        "describe": "渗压计 通道12 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch13" : {
+        "describe": "渗压计 通道13 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch14" : {
+        "describe": "渗压计 通道14 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch15" : {
+        "describe": "渗压计 通道15 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch16" : {
+        "describe": "渗压计 通道16 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch17" : {
+        "describe": "渗压计 通道17 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch18" : {
+        "describe": "渗压计 通道18 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch19" : {
+        "describe": "渗压计 通道19 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch20" : {
+        "describe": "渗压计 通道20 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch21" : {
+        "describe": "渗压计 通道21 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch22" : {
+        "describe": "渗压计 通道22 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch23" : {
+        "describe": "渗压计 通道23 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch24" : {
+        "describe": "渗压计 通道24 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch25" : {
+        "describe": "渗压计 通道25 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch26" : {
+        "describe": "渗压计 通道26 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch27" : {
+        "describe": "渗压计 通道27 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch28" : {
+        "describe": "渗压计 通道28 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch29" : {
+        "describe": "渗压计 通道29 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch30" : {
+        "describe": "渗压计 通道30 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch31" : {
+        "describe": "渗压计 通道31 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    },
+    "water_ch32" : {
+        "describe": "渗压计 通道32 参数配置",
+        "data_g": 1.1,
+        "data_r": 2.2,
+        "elevation": 3.3
+    }
+}

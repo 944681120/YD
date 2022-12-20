@@ -251,6 +251,12 @@ int hexarray2str(char *data, int size, char *str, int slen)
 	}
 	return s * 2;
 }
+string hexarray2string(char *data, int size)
+{
+	char buffer[4096] = {0};
+	hexarray2str(data, size, buffer, sizeof(buffer));
+	return string(buffer);
+}
 
 // void PRINTBYTES(const char*header,u8*data,int size)
 // {

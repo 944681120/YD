@@ -89,11 +89,10 @@ int di_poll(int fd, char *name)
     FD_ZERO(&rfds);
     FD_SET(fd, &rfds);
     maxfd = fd;
-    int lastValue = 0;
 
     while (1)
     {
-        // INFO("[di-poll]: select. name = %s", name);
+        INFO("[di-poll]: select. name = %s", name);
         ret = select((int)maxfd + 1, &rfds, NULL, NULL, NULL);
         if (ret <= 0)
         {
@@ -109,20 +108,8 @@ int di_poll(int fd, char *name)
                 ERROR("[di-poll] %s : open fail", name);
                 return -1;
             }
-            if ( lastValue != ucDioCfg.time )
-            {
-                lastValue = ucDioCfg.time;
-                if( (0xffff & ucDioCfg.time) == 0x3031 || (0xffff & ucDioCfg.time) == 0x3030 )
-                {
-                    ucDioCfg.value = (0xffff & ucDioCfg.time) - 0x3030;    //A5303
-                    ucDioCfg.time = std::time(nullptr);
-                }
-                INFO("[di-poll] time=[%d]   value=[%d]", (int)ucDioCfg.time, (int)ucDioCfg.value);
-                di_get(name);
-            }
-            
-            // INFO("[di-poll] time=[%d]   value=[%d]", (int)ucDioCfg.time, (int)ucDioCfg.value);
-            // di_get(name);
+            INFO("[di-poll] time=[%d]   value=[%d]", (int)ucDioCfg.time, (int)ucDioCfg.value);
+            di_get(name);
         }
         else
         {

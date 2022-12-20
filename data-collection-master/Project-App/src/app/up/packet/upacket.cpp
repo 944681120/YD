@@ -129,7 +129,8 @@ UDPacket *upacket_decode(UDpacketCache *ud, u8 *datain, int len, bool reset)
     }
     return NULL;
 }
-
+// 注意： M1 M2 M4:包长度 = 表示报文起始符之后、报文结束符之前的报文字节数
+// 注意： M3      :包长度 = 表示SYN控制符之后，结束符之前的报文字节数
 int upacket_encode(UUPacket *packet, bool up, u8 remote, ul64 local, u16 passwd, UPCMD cmd, u8 *data1, int len1, u8 *data2, int len2, STX stx, ETX etx)
 {
     u16 crc = 0;

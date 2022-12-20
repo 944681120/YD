@@ -12,26 +12,16 @@
             "persize": 1024,
             "retry_delays": 1800
         },
-	"rs485":[
-	{
-		"factorType":"Z1",
-		"port":"/dev/ttyRS1",
-		"baud":9600,
-		"brandName":"太仓嘉宝LBLJ",
-		"requestCmd":"010300040001C5CB",
-		"resultDataFilter":"010302",
-		"dataType":"int",
-		"dataFormatter":"AB"
-	 },
+        "rs485": [
             {
-                "baud": 9600,
-                "brandName": "徐州海河",
-                "dataFormatter": "AB",
+                "baud": 4800,
+                "brandName": "AT 基康_渗压计",
+                "dataFormatter": "ABCD",
                 "dataType": "int",
-                "factorType": "Z1",
-                "port": "/dev/ttyRS2",
-                "requestCmd": "010300000001840A",
-                "resultDataFilter": "010302"
+                "factorType": "OTHER JK_BGK",
+                "port": "/dev/ttyRS1",
+                "requestCmd": "",
+                "resultDataFilter": ""
             }
         ]
     },

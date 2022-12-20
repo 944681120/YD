@@ -122,6 +122,8 @@ static l64 P1_rain(time_t from, time_t to)
     return current;
 }
 
+
+
 void init_currentRain(time_t t)
 {
     time_t from = GetRainDayStartTime(timestd(0));

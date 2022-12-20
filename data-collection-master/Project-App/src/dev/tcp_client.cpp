@@ -61,7 +61,7 @@ int tcp_client::start(void *arg)
         INFO("[线程创建]:ERR = tcp_receive_send_thread");
         return -1;
     }
-    INFO("[线程创建]:OK = tcp_receive_send_thread");
+    //INFO("[线程创建]:OK = tcp_receive_send_thread");
     if (this->ppfd)
         pthread_cancel(this->ppfd);
     ret = pthread_create(&this->ppfd, NULL, tcp_receive_packet_thread, this);
@@ -70,7 +70,7 @@ int tcp_client::start(void *arg)
         INFO("[线程创建]:ERR = tcp_receive_packet_thread");
         return -1;
     }
-    INFO("[线程创建]:OK = tcp_receive_packet_thread");
+    //INFO("[线程创建]:OK = tcp_receive_packet_thread");
     this->step = TCP_STEP_OPEN;
     return this->pfd;
 }
@@ -162,7 +162,7 @@ void tcp_client::tcp_state_function(void)
             ioctl(this->socketfd, FIONBIO, &iocttl_block); // 1:非阻塞 0:阻塞
             this->step = TCP_STEP_CONNECT;
             this->connect_timeout = get_ms_clock() + this->connect_timeout_ms_max;
-            INFO("[tcp_state_function]: connecting......... to:%s:%d", this->setip, this->setport);
+            INFO("[tcp]: try connect->:%s:%d", this->setip, this->setport);
         }
         break;
     }
@@ -175,7 +175,7 @@ void tcp_client::tcp_state_function(void)
             if (get_ms_clock() > this->connect_timeout)
             {
                 this->step = TCP_STEP_OPEN_ERROR;
-                ERROR("[tcp_state_function]:tcp connect is timeout, stop connect server ...");
+                //ERROR("[tcp_state_function]:tcp connect is timeout, stop connect server ...");
             }
         }
         else
@@ -349,7 +349,7 @@ void *tcp_receive_send_thread(void *arg)
 {
     int counter = 0;
     tcp_client *c = (tcp_client *)arg;
-    INFO("[tcp_receive_send_thread]: is running");
+    //INFO("[tcp_receive_send_thread]: is running");
 
     while (1)
     {
@@ -362,7 +362,7 @@ void *tcp_receive_send_thread(void *arg)
             if (sssstep != c->step)
             {
                 sssstep = c->step;
-                INFO("[tcp_state_function]: step=%d", c->step);
+                //INFO("[tcp_state_function]: step=%d", c->step);
             }
             counter = 0;
         }
@@ -373,7 +373,7 @@ void *tcp_receive_packet_thread(void *arg)
 {
     tcp_client *c = (tcp_client *)arg;
     // INFO("[线程创建]:OK =
-    INFO("[tcp_receive_packet_thread]: is running");
+    //INFO("[tcp_receive_packet_thread]: is running");
     while (1)
     {
         if (c->ppfd_get)

@@ -84,20 +84,27 @@ Header::Header()
 Header::~Header() {}
 int Header::add_extbytes(u8 *d)
 {
-    //广州:添加 版本信息 + rtu序号
+    //广州:添加 rtu序号 + 版本信息
     if (rtu.device.gz.enable)
     {
         char buffer[10];
-        param[0xFFA1].toreport(buffer);
+        // FF9F
+        param[0xFF9F].toreport(buffer);
         memcpy(d, buffer, 2);
         memcpy(d + 2, buffer + 3, 2);
+
+        // FFA1
         d += 4;
-        param[0xFF9F].toreport(buffer);
+        param[0xFFA1].toreport(buffer);
         memcpy(d, buffer, 2);
         memcpy(d + 2, buffer + 3, 2);
         return 8;
     }
     return 0;
+}
+int Header::to_array_minimum(u8 *d)
+{
+    return add_extbytes(d);
 }
 int Header::to_array(u8 *d)
 {

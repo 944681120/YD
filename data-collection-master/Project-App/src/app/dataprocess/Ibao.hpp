@@ -360,7 +360,7 @@ public:
         // if (record_enable == false && Cycle_Check(std::time(0), record_seconds, record_delays))
         if (record_enable == false && Check_Time(&this->last_record_check_time, std::time(0), record_seconds, record_delays))
         {
-            INFO("[上报检测]  %s, 周期=%d,记录时间:%d,上报时间:%d", this->name.c_str(), record_seconds, record_delays, report_delays);
+            INFO("[上报检测]  %s ,周期=%d,记录时间:%d,上报时间:%d", this->name.c_str(), record_seconds, record_delays, report_delays);
             //倒序,一条一条来报
             msgs.clear();
             db_bu->find("valid!=0 LIMIT 1", msgs);
@@ -416,7 +416,7 @@ public:
 
         if (!report_log.empty())
         {
-            record_time = obtime;   //观测时间，就是record时间
+            record_time = obtime; //观测时间，就是record时间
             return BaoBase::report_data(dataout);
         }
 
@@ -472,7 +472,7 @@ public:
                 if (cnt != 0)
                 {
                     _info = "";
-                    //INFO("图片报，当前图片个数:%d", cnt);
+                    // INFO("图片报，当前图片个数:%d", cnt);
                     return true;
                 }
                 else
@@ -501,9 +501,9 @@ public:
         {
             s = fileList.back();
 
-            if(rtu.device.image.retry_delays==0 || TimeoutfileList.size() == 0)
+            if (rtu.device.image.retry_delays == 0 || TimeoutfileList.size() == 0)
             {
-                return (void*)fileList.back().c_str();
+                return (void *)fileList.back().c_str();
             }
             else
             {
@@ -511,7 +511,7 @@ public:
                 iter = TimeoutfileList.find(s);
                 if (iter == TimeoutfileList.end())
                 {
-                    return (void*)fileList.back().c_str();
+                    return (void *)fileList.back().c_str();
                 }
                 else
                 {
@@ -523,7 +523,7 @@ public:
                     if (abs(std::time(0) - lasttime) > delays)
                     {
                         INFO("时间到: timeout=%d, 重传文件:%s", (int)delays, s.c_str());
-                        return (void*)fileList.back().c_str();
+                        return (void *)fileList.back().c_str();
                     }
                     else
                     {
@@ -554,8 +554,7 @@ public:
                 fileList.pop_back();
             }
         }
-
-        return true;
+        return false;
     }
     bool report_ok()
     {

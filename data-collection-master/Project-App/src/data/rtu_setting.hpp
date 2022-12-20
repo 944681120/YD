@@ -37,7 +37,6 @@ typedef struct rtu_485
 
 } Rtu485;
 
-//广州是否支持 version 与  sn
 typedef struct rtu_guangzhou
 {
     bool enable;      //是否上传     规约版本,RTU序号
@@ -46,6 +45,20 @@ typedef struct rtu_guangzhou
     string link_mode; //链路使用方式  "M2"
     JSON_BIND(rtu_guangzhou, enable, version, sn, link_mode);
 } Rtuguangzhou;
+
+// //定制功能，与远动不一样的个性化都在这里配置
+// typedef struct rtu_dingzhi{
+
+//    string protocol;              //协议版本
+//    vector<string> protocol_list; //当前支持的所有协议的版本
+
+//    //=============各个版本的个性化定制配置====================//
+//    //《广州市“智慧排水”项目物联数据接入标准》_V2.0_20220630
+//    //不同点:1.上报协议版本 2.上报rtu序号 3.链路咱使用 M2方式
+
+//     JSON_BIND(rtu_dingzhi,protocol,protocol_list,gz);
+
+// }Rtudingzhi;
 
 //对时
 typedef struct rtu_ntp
@@ -108,6 +121,7 @@ struct rtu_param
     vector<string> remote;
     string bdSerialPort;
     int bdBaud;
+    string bdAddr; //"HEX string"
     vector<string> shishi;
     vector<string> dingshi;
     vector<string> xiaoshi;
@@ -115,7 +129,7 @@ struct rtu_param
     map<string, l64> runtime;        // runtime 部分
     map<string, string> personalset; // personalset
 
-    JSON_BIND(rtu_param, terminalNo, terminalType, model, passwd, center, remote, bdSerialPort, bdBaud, shishi, dingshi, xiaoshi, jiabao, runtime, personalset);
+    JSON_BIND(rtu_param, terminalNo, terminalType, model, passwd, center, remote, bdSerialPort, bdBaud, bdAddr, shishi, dingshi, xiaoshi, jiabao, runtime, personalset);
 };
 
 //=============================分类2 设备端参数===============================//

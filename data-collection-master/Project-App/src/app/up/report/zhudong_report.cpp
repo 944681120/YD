@@ -97,8 +97,8 @@ static void bao_init(void)
 {
 
     /*设置报文时间,具体从 runtime中读取*/
-    int dingshi_interval = runtime[0x20].Value() * 60;  //定时报的时间单位为 min
-    int xiaoshi_interval = 60 * 60;
+    int dingshi_interval = runtime[0x20].Value() * 60; //定时报的时间单位为 min
+    int xiaoshi_interval = 60 * 60;                    /*  */
     int jiabao_interval = runtime[0x21].Value() * 60;
     int bubao_interval = 15 * 60;
     int lianlu_interval = 5 * 60;
@@ -128,16 +128,30 @@ static void bao_poll(SendMode *s)
         baos[i]->poll();
         if (baos[i]->report_check(false))
         {
+            //未连接
+            if (s == NULL)
+            {
+                continue;
+            }
+
             int rs = baos[i]->report_data(buffer);
             // hexarray2str(buffer, rs, bufferstring, sizeof(bufferstring));
             // INFO("上报数据为:%s", bufferstring);
             if (s == &serial_sendmode)
             {
-                ERROR("端口未打开,转到补报");
-                baos[i]->report_fail();
-                baos[i]->report_check(true);
+                //定时报，小时报，使用这个来传输,其他暂不支持
+                if (baos[i]->Cmd() != UPCMD_34H_XiaoshiBao && baos[i]->Cmd() != UPCMD_32H_DingshiBao && baos[i]->Cmd() != UPCMD_33H_JiabaoBao)
+                {
+                    if (baos[i]->Cmd() == UPCMD_36H_Image)
+                    {
+                        continue;
+                    }
+                    ERROR("[不支持] 不支持通过 北斗上报数据. Cmd=%s", cmd_to_string(baos[i]->Cmd()));
+                    baos[i]->report_fail();
+                    baos[i]->report_check(true);
+                    continue;
+                }
             }
-            else
             {
                 //上传图片
                 if (baos[i]->Cmd() == UPCMD_36H_Image)
@@ -268,7 +282,8 @@ extern int get_sendmode(SendMode **sm);
 ===================================================================*/
 void zhudong_report_process(void)
 {
-    SendMode *s = NULL;
+    static SendMode *_s = NULL;
+    static SendMode *s = NULL;
     static bool inited = false;
     if (inited == false)
     {
@@ -280,6 +295,11 @@ void zhudong_report_process(void)
     if (get_sendmode(&s) == -1)
     {
         s = &serial_sendmode;
+    }
+    if (_s != s && s != NULL)
+    {
+        _s = s;
+        INFO("[切换到] %s", ((_s == &serial_sendmode) ? "北斗" : "Tcp"));
     }
     bao_poll(s);
 }

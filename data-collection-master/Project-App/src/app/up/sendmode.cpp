@@ -82,6 +82,7 @@ int SendMode::m3_send(int sn, int ms)
             ERROR("_imp,读取不到数据发送");
             return 0;
         }
+        INFO("[多包发送] 总包数: %d,包序号: %d, 数据长度:%d ", this->packet_count, sn, actlen);
         //分包发送
         // u8 *d = &this->data[(sn - 1) * this->psize];
         nowlen = actlen;
@@ -173,7 +174,7 @@ void SendMode::onsend(UUPacket *sp, bool ok)
     if (p == 0)
         p = 1;
     this->seial_number = p;
-    INFO("序列号++, 发送=%d, 当前(下一包)=%d ", get_current_liushui(), p);
+    INFO("当前流水号=%d ", get_current_liushui());
     set_current_liushui(p);
 }
 //流程控制
@@ -327,7 +328,8 @@ int SendMode::wait(int ms, Callback *to, Callback *get)
         while (c < this->packet_count)
         {
             int r = m3_send(c + 1, ms);
-            this->onsend(&this->up, true);
+            if (c == 0)
+                this->onsend(&this->up, true);
             if (r < 0)
                 return -1; //链路超时
             c++;
@@ -397,4 +399,4 @@ bool SendMode::isopen(void)
 }
 
 SendMode tcp_sendmode;
-SendMode serial_sendmode;
+//SendMode serial_sendmode;

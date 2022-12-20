@@ -4,7 +4,7 @@
 #include "lib.h"
 
 
-#define PDSIZE 2048
+#define PDSIZE 4048
 
 #pragma pack(1)
 

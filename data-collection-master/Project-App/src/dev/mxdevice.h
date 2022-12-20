@@ -66,7 +66,7 @@ public:
     int open(void *arg);
     int close(void *arg);
     int keepalive(bool k);
-    int send(void *buffer, int len, int sms,int rms);
+    virtual int send(void *buffer, int len, int sms,int rms);
     bool is_keepalive(void);
     bool is_send_end(void);
     void set_rx_arg(void*arg);

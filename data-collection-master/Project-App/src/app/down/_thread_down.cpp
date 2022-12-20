@@ -7,6 +7,13 @@
 #include "header.h"
 #include "rtu_setting.hpp"
 #include "unistd.h"
+#include "DataClass.hpp"
+#include "strDeal.h"
+#include "math.h"
+#include "json.hpp"
+#include <string>
+
+#define OSMOMETER_CHANNEL_FILE "/app-cjq/setting/syj_channel.json"
 
 /*-------------------------------------------------------------------------------------
                  传感器转码
@@ -54,6 +61,12 @@ __int64_t parse_data(char *recv, char *shunxu, char *fomat, u8 *frame, int len, 
   PRINTBYTES("[frame         ] ", frame, len);
 
   *ferr = 0;
+  if ( pre[0] == 'A' && pre[1] == 'T' )
+  {
+    *ferr = 0;
+    INFO("AT指令不做解析.");
+    return 0;
+  }
   if (memcmp(pre, frame, prec) != 0)
   {
     INFO("帧头错误,无法解析.");
@@ -173,7 +186,6 @@ l64 read_a_data(dfsm *dev, int index, int timeoutms, int *result)
   int sendlen = recv_patten((char *)item.requestCmd.data(), sbuffer);
   if (sendlen > 0)
   {
-
     dev->wann = (strlen((char *)item.resultDataFilter.data()) + strlen((char *)item.dataFormatter.data())) / 2;
     INFO("[读传感器] wann=%d  step=%d.", dev->wann, dev->step);
     if (dev->step == DFSM_STATE_IDLE || dev->step == DFSM_STATE_WAIT)
@@ -183,6 +195,12 @@ l64 read_a_data(dfsm *dev, int index, int timeoutms, int *result)
           { INFO("[读传感器]:超时"); },
           [](void *b) {});
       long timeout = get_ms_clock() + timeoutms; // 2s
+
+    //   if (strstr(item.factorType.data(), "OTHER JK_BGK") != NULL)
+    //   {
+    //       return 0;
+    //   }
+      
       while ((timeout > get_ms_clock()) && (dev->getpacket == false))
       {
         dev->process();
@@ -254,8 +272,108 @@ void *thread_down_deal(void *arg)
   dfsm_device_init();
   dfsm *pdd = NULL;
 
+  /* AT指令数获取保存 */
+  static struct DEALAT_S
+  {
+    int dealAtFlag = 0;     //是否处理完的标志
+    int channel = 0;            //
+    double T = 0;           //温度读数
+    double P = 0;           //水位读数
+    double A = 0.0000001918018062;
+    double B = -0.1109328241894630;
+    double C = 919.24005588339500;
+    double a = 0.0014051;
+    double b = 0.0002369;
+    double c = 0.0000001019;
+    double R = 0;           //初始读数
+
+    void clear()
+    {
+        dealAtFlag = 0;
+        channel = 0;   
+        T = 0;         
+        P = 0;         
+        R = 0;         
+    }
+  }dealAt_s;
+
+  json jch;
+  jch.clear();
+  std::ifstream ifs(OSMOMETER_CHANNEL_FILE);
+  ifs >> jch;
+
   while (1)
   {
+    /* AT指令换算 */
+    for (int i = 0; i < rtu.device.rs485.size(); i++)
+    {
+        pdd = dfsm_device_find(rtu.device.rs485[i].port);
+        if ( pdd->ATflag == 2 )
+        {
+            pdd->ATflag = 0;
+            dealAt_s.T = 0;          //温度读数
+            dealAt_s.P = 0;          //水位读数
+            dealAt_s.R = 0;          
+            if ( strstr((char*)pdd->ATbuf, "AT+TESTREPORT&VALUE") != NULL )
+            {
+                dealAt_s.dealAtFlag = 1;
+                INFO("开始处理AT指令------------------------------------------------------");
+                char* buff[64] = {0};
+                char channelName[64] = {0};
+                char atsptstr[64] = {0};
+                sscanf((char*)pdd->ATbuf, "%*[^{]{ %[^:]:", channelName);
+
+                if ( strlen(channelName) != 0 )
+                {
+                    std::string prech = "channel_";
+                    for (int i = 0; i < 32; i++)
+                    {
+                        if ( jch.count(prech + std::to_string(i + 1)) )
+                        {
+                            std::string cfg_sh = jch[prech + std::to_string(i + 1)];
+                            if(strstr( cfg_sh.c_str(), channelName) != NULL )
+                            {
+                                dealAt_s.channel = i+1;
+                                INFO("渗压计通道号:%d[%s]", dealAt_s.channel, channelName);
+                                break;
+                            }
+                        }
+                        
+                    }
+                }
+
+                sscanf((char*)pdd->ATbuf, "%*[^{]{ %*[^:]: %[^}]", atsptstr);
+                int substrnum =  splitStr(atsptstr, ",", buff, sizeof(buff));
+                for (int i = 0; i < substrnum; i++)
+                {
+                    INFO("AT指令处理完的数据:%s", buff[i]);
+                }
+                double baseR = atof(buff[0]);
+                double baseT = log(atof(buff[1]));
+                dealAt_s.R = baseR * baseR / 1000;
+                double denT = dealAt_s.a + dealAt_s.b*baseT + dealAt_s.c*baseT*baseT*baseT;
+                dealAt_s.T = 1 / denT - 273.2;
+                dealAt_s.P = dealAt_s.A*dealAt_s.R*dealAt_s.R + dealAt_s.B*dealAt_s.R + dealAt_s.C;
+
+                std::string pl = "SYJ_PL";
+                std::string wd = "SYJ_WD";
+                std::string sw = "SYG_SW";
+                char val[16] = {0};
+                sprintf(val, "%0.1f", dealAt_s.R*10);    //取1小数点
+                devdata[ (pl + std::to_string(dealAt_s.channel)).c_str() ].val = atoi(val);
+                sprintf(val, "%0.1f", dealAt_s.T*10);    //取1小数点
+                devdata[ (wd + std::to_string(dealAt_s.channel)).c_str() ].val = atoi(val);
+                sprintf(val, "%0.1f", dealAt_s.P*10);    //取1小数点
+                devdata[ (sw + std::to_string(dealAt_s.channel)).c_str() ].val = atoi(val);
+                
+                INFO("计算数值/赋值:频率[%f][%d] 温度[%f][%d] 水位[%f][%d]",  dealAt_s.R, devdata[ (pl + std::to_string(dealAt_s.channel)).c_str() ].val, 
+                                                                            dealAt_s.T, devdata[ (wd + std::to_string(dealAt_s.channel)).c_str() ].val,
+                                                                            dealAt_s.P, devdata[ (sw + std::to_string(dealAt_s.channel)).c_str() ].val);
+                dealAt_s.clear();
+            }
+        }
+    }
+
     //===============采样数据==========================
     if (is_down(true))
     {
@@ -320,6 +438,20 @@ void *thread_down_deal(void *arg)
             extern void waterlevel_caculation(l64 wl, DataClassItemConfig * pconfig, bool result, bool clear);
             waterlevel_caculation(value, pconfig, result, clear);
           }
+          // llzhan 渗压计
+          else if (pconfig->id >= 0xFF00 && pconfig->id <= 0xFF3F)
+          {
+            INFO("渗压计温度 %04x, %d", pconfig->id, value);
+            extern void osmometer_caculation(l64 wl, DataClassItemConfig * pconfig, bool result, bool clear, void* para);
+            osmometer_caculation(value, pconfig, result, clear, &dealAt_s);
+          }
+          // llzhan 渗压计
+          else if (pconfig->id >= 0xFFC0 && pconfig->id <= 0xFFDE)
+          {
+            INFO("渗压计频率 %04x, %d", pconfig->id, value);
+            extern void osmometer_caculation(l64 wl, DataClassItemConfig * pconfig, bool result, bool clear, void* para);
+            osmometer_caculation(value, pconfig, result, clear, &dealAt_s);
+          }
           else
           {
             INFO("数据的直接保存");
@@ -330,7 +462,10 @@ void *thread_down_deal(void *arg)
         }
         else
         {
-          ERROR("无法处理数据:%s", item.factorType.c_str());
+            if ( item.factorType.compare("OTHER JK_BGK") != 0 )
+            {
+                ERROR("无法处理数据:%s", item.factorType.c_str());
+            }
         }
         pdd->process();
         usleep(50000);

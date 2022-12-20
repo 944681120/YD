@@ -10,7 +10,8 @@
 void *thread_up(void *arg);
 
 MxDeviceTcpClient client;
-MxDeviceSerialPort serial;
+//MxDeviceSerialPort serial;
+MxDeviceBeidou beidou;
 
 // init
 pthread_t thread_up_init(void)
@@ -56,17 +57,17 @@ void down_packet_process(void *arg)
 //备用 :0x05,0x07,0x09,0x0B
 static char ipport[8][50];
 static u8 remoters[4];
-char *get_ip_port(int id, u8 *c)
+string get_ip_port(int id, u8 *c)
 {
     if (id < 0x04 || id > 0x0B)
-        return NULL;
+        return "";
     int index = id - 0x04;
-    if (index > rtu.param.remote.size())
-        return NULL;
+    if (index >= rtu.param.remote.size())
+        return "";
     if ((index / 2) > rtu.param.center.size())
-        return NULL;
+        return "";
     *c = rtu.param.center[index / 2];
-    return (char *)rtu.param.remote[index].c_str();
+    return rtu.param.remote[index];
 }
 
 int get_yaosu(YaoSu *yaosu)
@@ -79,53 +80,49 @@ int get_yaosu(YaoSu *yaosu)
 // 0 等待  1:ok  -1:error
 int get_sendmode(SendMode **sm)
 {
+    static int timeout_max = 5;
+    static string current_ip = "";
+    static time_t connect_timeout = 0;
+    static int ip_index = 0;
+    bool _switch = false;
+    if (connect_timeout == 0)
+        time_t(0);
     // 1.判断tcp状态
     if (tcp_sendmode.isopen())
     {
         *sm = &tcp_sendmode;
+        connect_timeout = time(0);
         return 1;
     }
 
-    // 2.等待已经配置的链接
-    switch (tcp_sendmode.get_device_state())
+    //2.10秒连接，失败就切换
+    if (current_ip == "" || ((connect_timeout + timeout_max) < time(0)))
     {
-    //已经关闭-》重连
-    case DS_NULL:
-        break;
-    case DS_CLOSE:
-        break;
-    //正在链接-》等待
-    case DS_CONNECTING:
-        return 0;
-    //应经打开->返回
-    case DS_OPEN:
-    {
-        *sm = &tcp_sendmode;
-        return 1;
-    }
-    //等待
-    case DS_WAIT:
-        return 0;
-    }
-
-    // 3.链接失败，重新尝试链接
-    // for(int i=0;i<8;i++)
-    for (int i = 0; i < 8; i++)
-    {
+        // 3.链接失败，重新尝试链接
         u8 center = 0;
-        char *ip = get_ip_port(0x04 + i, &center);
-        if (ip != NULL)
+        string ip = get_ip_port(0x04 + ip_index, &center);
+        ip_index++;
+        if (ip_index > 8)
+        {
+            ip_index = 0;
+            return -1;
+        }
+        if (ip != "")
         {
             //尝试链接
-            tcp_sendmode.config(&client, NULL, (void *)ip);
+            current_ip = string(ip);
+            connect_timeout = time(0);
+            tcp_sendmode.config(&client, NULL, (void *)ip.c_str());
             tcp_sendmode.center = &down_packet_process;
             client.keepalive(true);
             tcp_sendmode.connect();
             set_current_remote(center);
             return 0;
         }
+        return 0;
     }
-    return -1;
+
+    return 0;
 }
 
 // 上报处理
@@ -154,7 +151,7 @@ void *thread_up(void *arg)
     char rate[20];
     char sport[50];
     sprintf(rate, "%d", rtu.param.bdBaud);
-    serial_sendmode.config(&serial, (void *)rtu.param.bdSerialPort.data(), (void *)rate);
+    serial_sendmode.config(&beidou, (void *)rtu.param.bdSerialPort.data(), (void *)rate);
     // serial_sendmode.config(&serial,(void*)"/dev/ttyRS1",(void*)"115200");
     serial_sendmode.center = &down_packet_process;
     serial_sendmode.connect();

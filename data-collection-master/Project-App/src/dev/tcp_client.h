@@ -25,6 +25,7 @@
 #include <string.h>
 //using std::string;
 
+#define TCP_SEND_BUFFER_MAX 4096
 
 enum TCP_STEP{
     TCP_STEP_NULL = 0,
@@ -73,8 +74,8 @@ public:
     bool closed = false;
 
     //链接，发送，接收 超时
-    int connect_timeout_ms_max = 1000;
-    int send_timeout_ms_max = 2000;
+    int connect_timeout_ms_max = 2000;
+    int send_timeout_ms_max = 3000;
     int recv_timeout_ms_max = 5000;
     ul64 connect_timeout;
     ul64 send_timeout;
@@ -86,7 +87,7 @@ public:
     int  setport = 0;
 
     //发送缓冲
-    u8 sendbuffer[2048];
+    u8 sendbuffer[TCP_SEND_BUFFER_MAX];
     int sendlen=0;
     int sendreconnect=0;
 

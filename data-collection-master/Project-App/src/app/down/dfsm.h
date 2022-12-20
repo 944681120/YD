@@ -17,6 +17,9 @@ public:
     int rlen = 0;
     bool getpacket = false;
     int wann = 0;
+    int ATflag = 0;     //AT指令 1接收到 2接收完毕
+    int ATlen = 0;
+    u8 ATbuf[256] = {0};
     //状态机
     int step;
     long ms_timeout;

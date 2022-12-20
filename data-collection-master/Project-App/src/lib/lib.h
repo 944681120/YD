@@ -52,6 +52,7 @@ char *get_cur_time();
 
 int str2hexarray(const char *str, int slen, char *dataout, int outsize);
 int hexarray2str(char *data, int size, char *str, int slen);
+string hexarray2string(char *data, int size);
 string tostring16(l64 v);
 
 bool is_zero(u8 *d, int len);
@@ -218,7 +219,6 @@ std::vector<std::string> split(std::string str, std::string pattern);
 
 std::string list_merge(std::vector<std::string> list, std::string parttern);
 #include "DataClass.hpp"
-
 
 long findfileinfolder(const char *dir_name, string extend_name, std::vector<std::string> &fileList, std::vector<std::string> &nameList);
 

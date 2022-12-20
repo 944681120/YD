@@ -300,7 +300,7 @@ public:
         if (this->config.len <= 0)
             return 0;
 
-        if (this->config.id > 0xFF00)
+        if (this->config.id >= 0xFF00)
         {
             //自定义id
             bigbcd[0] = 0xFF;

@@ -13,7 +13,7 @@ class MPBase
 
 public:
     int persize = 1024;
-    char buffer[2048];
+    char buffer[1024 * 4];
     //读一包数据
     virtual int read(int offset, int size, char *dataout) = 0; // { return 0; }
     //总长
@@ -26,7 +26,6 @@ class MPImageBase : public MPBase
 {
 private:
     const char *file;
-    // char buffer[0x4000];
     FILE *fd = NULL;
     long _size = 0;
     time_t _guan_ce;
@@ -102,17 +101,31 @@ public:
             return 0;
         int reportsize = 0, readsize = 0;
         Header h;
-        h.liushui = get_current_liushui();
-        h.observetime = _guan_ce;
-        reportsize += h.to_array((u8 *)dataout);
-        dataout += reportsize;
-        dataout[0] = 0xF3;
-        dataout[1] = 0xF3; //图片标识符
-        dataout += 2;
-        reportsize += 2;
+
+        if (offset == 0)
+        {
+            //广州的第一包是F3F3,其他不用F3F3,也不用 流水等信息,流水号也不用++
+            h.liushui = get_current_liushui();
+            h.observetime = _guan_ce;
+            reportsize += h.to_array((u8 *)dataout);
+            dataout += reportsize;
+
+            dataout[0] = 0xF3;
+            dataout[1] = 0xF3; //图片标识符
+            dataout += 2;
+            reportsize += 2;
+        }
+        else
+        {
+            //从第2包开始
+            reportsize += h.to_array_minimum((u8 *)dataout);
+            dataout += reportsize;
+        }
+
         readsize = read(offset, size, dataout);
-        if (readsize == 0)
+        if (readsize <= 0)
             return 0;
+
         return reportsize + readsize;
     }
 };

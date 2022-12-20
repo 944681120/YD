@@ -26,6 +26,7 @@ public:
     int to_array(u8 *dataout);
     string toString();
     int to_array_front3(u8 *d);
+    int to_array_minimum(u8*d);
     string toStringfront3();
 };
 
