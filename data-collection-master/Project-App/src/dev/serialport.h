@@ -74,7 +74,7 @@ public:
     int fd = -1;
     int rec_len_temp = 0;
     long   receive_timeout;
-    long   packet_timeout = 50;//50ms
+    long   packet_timeout = 400;//50ms
 
     //set packet process
     int set_packet_process(void* func,int frame_timeout);

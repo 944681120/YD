@@ -4,6 +4,92 @@
 #include "fcntl.h"
 #include "unistd.h"
 #include "dfsm.h"
+#include "rtu_setting.hpp"
+
+extern u8 string_to_byte(char *st);
+typedef struct GNSS_s
+{
+    unsigned char devaddr;               // 01 设备地址
+    unsigned char funcode;               // 03 功能码
+    unsigned char datlen;                // 48 数据长度
+    unsigned char timstamp[4];           // 62 30 51 2C 时间戳，转换为1647333676
+    unsigned char state[2];              // 00 04 定位状态，转换为4. （0：未定位，1：单点，4：固定解，5：浮点）
+    unsigned char satenum[2];            // 00 0D 卫星数，13
+private:
+    unsigned char m_longitude[8];          // 40 5C 5B 7E 03 C1 41 1B 经度
+    unsigned char m_latitude[8];           // 00 00 00 00 00 00 00 00 纬度
+    unsigned char m_voltage[2];            // 22 D5 设备电压
+    unsigned char m_addr_485[2];           // 00 01 485地址，默认1
+    unsigned char m_baud[2];               // 25 80 波特率默认9600
+    unsigned char m_validsign[2];          // 00 01数据是否有效 （0：无效；1：1小时有效；12：12小时有效；24：24小时有效）
+    unsigned char m_offset_north[4];       // 3E 1F DF 7E北向偏移量
+    unsigned char m_offset_east[4];        // 3D A0 A5 46东向偏移量
+    unsigned char m_offset_upright[4];     // BF 18 ED 67天向偏移量
+    unsigned char m_distance_north[8];     // 3F 3F 36 16 00 00 00 00北向距离
+    unsigned char m_distance_east[8];      // BF 32 3B 1D 40 00 00 00东向距离
+    unsigned char m_distance_upright[8];   // 3F 3C A7 30 C4 EC 00 00天向距离
+public:
+    unsigned char restimstamp[4];        // 62 30 47 80解算结果时间戳
+    unsigned char checkcode[2];          // 02 AA校验
+
+    double longitude;       
+    double latitude;        
+    int voltage;         
+    int addr_485;        
+    int baud;            
+    int validsign;       
+    float offset_north;    
+    float offset_east;     
+    float offset_upright;  
+    double distance_north;  
+    double distance_east;
+    double distance_upright;
+
+    void convert(void* dat, const unsigned char* buf, int buflen)
+    {
+        unsigned char _buf[buflen] = { 0 };
+        for (int i = 0; i < buflen; i++)
+        {
+            _buf[i] = buf[buflen - i - 1];
+        }
+
+        switch (buflen)
+        {
+            case 2:
+                *(int*)dat = (buf[0] << 8) + buf[1]; 
+                break;
+
+            case 4:
+                *(float*)dat = *(float*)_buf;
+                break;
+
+            case 8:
+                *(double*)dat = *(double*)_buf;
+                break;
+            
+            default:
+                break;
+        }
+    }
+
+    int init(unsigned char* dat, int datlen)
+    {
+        *this = *(GNSS_s*)dat;
+        convert(&longitude, m_longitude, sizeof(m_longitude));
+        convert(&latitude, m_latitude, sizeof(m_latitude));
+        convert(&voltage, m_voltage, sizeof(m_voltage));
+        convert(&addr_485, m_addr_485, sizeof(m_addr_485));
+        convert(&baud, m_baud, sizeof(m_baud));
+        convert(&validsign, m_validsign, sizeof(m_validsign));
+        convert(&offset_north, m_offset_north, sizeof(m_offset_north));
+        convert(&offset_east, m_offset_east, sizeof(m_offset_east));
+        convert(&offset_upright, m_offset_upright, sizeof(m_offset_upright));
+        convert(&distance_north, m_distance_north, sizeof(m_distance_north));
+        convert(&distance_east, m_distance_east, sizeof(m_distance_east));
+        convert(&distance_upright, m_distance_upright, sizeof(m_distance_upright));
+        return 0;
+    }
+}GNSS;
 
 static int UART0_Set(int fd, int speed, int flow_ctrl, int databits, int stopbits, int parity)
 {
@@ -354,7 +440,7 @@ void *serialport_read_thread(void *arg)
         dfsm *f = (dfsm *)arg;
         if ( strstr((char*)s->uart_receive.data_buffer, "AT+") != NULL || f->ATflag == 1 )    
         {
-          if ( f->ATflag == 0)
+          if ( f->ATflag == 0 || strstr((char*)s->uart_receive.data_buffer, "AT+") != NULL )
           {
             memset(f->ATbuf, 0, sizeof(f->ATbuf));
             f->ATlen = 0;
@@ -369,6 +455,69 @@ void *serialport_read_thread(void *arg)
           }
         }
         /*  插入接收到AT指令数据 end */
+
+        /*  插入长度计算 start */
+        char resultDataFilter_buf[32] = {0};
+        int resultDataFilter_hexlen = 0;
+        bool isResultDataFilter = true;
+        for (int i = 0; i < rtu.device.rs485.size(); i++)   // 获取指定数据头
+        {
+            rtu_485 item = rtu.device.rs485[i];
+            if ( strstr((const char *)item.brandName.data(), "GNSS") != NULL )
+            {
+                int rlenth = strlen((const char *)item.resultDataFilter.data());
+                char rbuff[32] = {0};
+                memcpy(rbuff, (const char *)item.resultDataFilter.data(), rlenth);
+                
+                for ( i = 0; i < rlenth; i+=2)
+                {
+                    resultDataFilter_buf[i/2] = string_to_byte(&rbuff[i]);
+                }
+                resultDataFilter_hexlen = rlenth / 2;
+                break;
+            }
+        }
+        for (int i = 0; i < resultDataFilter_hexlen; i++)
+        {
+            if ( s->uart_receive.data_buffer[i] != resultDataFilter_buf[i] )
+            {
+                isResultDataFilter = false;
+                break;
+            }
+        }
+        
+        if ( (isResultDataFilter == true && s->uart_receive.temp_ptr == s->rec_len_temp) || f->longflag == 1 )
+        {
+          if ( f->longflag != 1 )
+          {
+            memset(f->longbuf, 0, sizeof(f->longbuf));
+            f->longlen = 0;
+          }
+          f->longflag = 1;
+          memcpy(f->longbuf + f->longlen, s->uart_receive.data_buffer, s->uart_receive.temp_ptr);
+          f->longlen += s->uart_receive.temp_ptr;
+          if ( f->longlen >= f->longbuf[2] )    //接收完毕
+          {
+            f->longflag = 2;
+
+            GNSS gnss;
+            gnss.init(f->longbuf, f->longlen);
+
+            INFO("经度 %f", gnss.longitude);
+            INFO("纬度 %f", gnss.latitude);
+            INFO("设备电压 %d", gnss.voltage);
+            INFO("485地址 %d", gnss.addr_485);
+            INFO("波特率 %d", gnss.baud);
+            INFO("数据是否有效 %d", gnss.validsign);
+            INFO("北向偏移量 %f", gnss.offset_north);
+            INFO("东向偏移量 %f", gnss.offset_east);
+            INFO("天向偏移量 %f", gnss.offset_upright);
+            INFO("北向距离 %f", gnss.distance_north);
+            INFO("东向距离 %f", gnss.distance_east);
+            INFO("天向距离 %f", gnss.distance_upright);
+          }
+        }
+        /*  插入长度计算 end */
 
         s->packet(arg, s->uart_receive.data_buffer, s->uart_receive.temp_ptr);
       }

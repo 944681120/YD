@@ -20,6 +20,9 @@ public:
     int ATflag = 0;     //AT指令 1接收到 2接收完毕
     int ATlen = 0;
     u8 ATbuf[256] = {0};
+    int longflag = 0;   //接收长数据 1接收到 2接收完毕
+    int longlen = 0;
+    u8 longbuf[256] = {0};
     //状态机
     int step;
     long ms_timeout;

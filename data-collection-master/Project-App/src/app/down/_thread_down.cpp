@@ -195,11 +195,6 @@ l64 read_a_data(dfsm *dev, int index, int timeoutms, int *result)
           { INFO("[读传感器]:超时"); },
           [](void *b) {});
       long timeout = get_ms_clock() + timeoutms; // 2s
-
-    //   if (strstr(item.factorType.data(), "OTHER JK_BGK") != NULL)
-    //   {
-    //       return 0;
-    //   }
       
       while ((timeout > get_ms_clock()) && (dev->getpacket == false))
       {
@@ -338,7 +333,6 @@ void *thread_down_deal(void *arg)
                                 break;
                             }
                         }
-                        
                     }
                 }
 

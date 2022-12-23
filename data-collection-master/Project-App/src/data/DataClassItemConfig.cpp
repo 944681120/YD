@@ -145,7 +145,7 @@ const DataClassItemConfig devdata_config_items[] = {
     {0xFFA7, "QC7", NNNN(10, 0), DF_BCD, "取(排）水口累计流量 7"},
     {0xFFA8, "QC8", NNNN(10, 0), DF_BCD, "取(排）水口累计流量 8"},
     //============================广西小水库=================================//
-    {0x0000, "OTHER JK_BGK", NNNN(6, 1), DF_BCD, "基康BGK AT指令数据"},
+    {0x0000, "OTHER", NNNN(6, 1), DF_BCD, "多值数据包"},
     {0xFFC0, "SYJ_PL1", NNNN(6, 1), DF_BCD, "渗压计频率 1 "},
     {0xFFC1, "SYJ_PL2", NNNN(6, 1), DF_BCD, "渗压计频率 2 "},
     {0xFFC2, "SYJ_PL3", NNNN(6, 1), DF_BCD, "渗压计频率 3 "},
