@@ -19,7 +19,9 @@ public:
     int wann = 0;
     int ATflag = 0;     //AT指令 1接收到 2接收完毕
     int ATlen = 0;
+    int ATid = -1;  // 记录AT设备发送了cmd，则下一次换成另一个设备发送
     u8 ATbuf[256] = {0};
+    list<vector<u8>> ATbuffs;
     int longflag = 0;   //接收长数据 1接收到 2接收完毕
     int longlen = 0;
     u8 longbuf[256] = {0};

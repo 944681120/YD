@@ -12,6 +12,8 @@
 #include "math.h"
 #include "json.hpp"
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 #define OSMOMETER_CHANNEL_FILE "/app-cjq/setting/syj_channel.json"
 
@@ -194,7 +196,7 @@ l64 read_a_data(dfsm *dev, int index, int timeoutms, int *result)
           sbuffer, sendlen, 2, [](void *a)
           { INFO("[读传感器]:超时"); },
           [](void *b) {});
-      long timeout = get_ms_clock() + timeoutms; // 2s
+      long timeout = get_ms_clock() + timeoutms; // 4s
       
       while ((timeout > get_ms_clock()) && (dev->getpacket == false))
       {
@@ -270,7 +272,7 @@ void *thread_down_deal(void *arg)
   /* AT指令数获取保存 */
   static struct DEALAT_S
   {
-    int dealAtFlag = 0;     //是否处理完的标志
+    int dealAtFlag = 0;         //获取基康AT回复状态
     int channel = 0;            //
     double T = 0;           //温度读数
     double P = 0;           //水位读数
@@ -302,21 +304,23 @@ void *thread_down_deal(void *arg)
     /* AT指令换算 */
     for (int i = 0; i < rtu.device.rs485.size(); i++)
     {
+        
         pdd = dfsm_device_find(rtu.device.rs485[i].port);
-        if ( pdd->ATflag == 2 )
+        dealAt_s.dealAtFlag = pdd->ATflag;
+        if ( pdd->ATbuffs.size() > 0 )
         {
             pdd->ATflag = 0;
             dealAt_s.T = 0;          //温度读数
             dealAt_s.P = 0;          //水位读数
             dealAt_s.R = 0;          
-            if ( strstr((char*)pdd->ATbuf, "AT+TESTREPORT&VALUE") != NULL )
+            // if ( strstr((char*)&pdd->ATbuffs.begin()->at(0), "AT+TESTREPORT&VALUE") != NULL )
+            if ( strstr((char*)&pdd->ATbuffs.begin()->at(0), "AT+SAMPLE&VALUE") != NULL && strstr((char*)&pdd->ATbuffs.begin()->at(0), "TIMEOUT") == NULL )
             {
-                dealAt_s.dealAtFlag = 1;
                 INFO("开始处理AT指令------------------------------------------------------");
                 char* buff[64] = {0};
                 char channelName[64] = {0};
                 char atsptstr[64] = {0};
-                sscanf((char*)pdd->ATbuf, "%*[^{]{ %[^:]:", channelName);
+                sscanf((char*)&pdd->ATbuffs.begin()->at(0), "%*[^{]{ %[^:]:", channelName);
 
                 if ( strlen(channelName) != 0 )
                 {
@@ -336,7 +340,7 @@ void *thread_down_deal(void *arg)
                     }
                 }
 
-                sscanf((char*)pdd->ATbuf, "%*[^{]{ %*[^:]: %[^}]", atsptstr);
+                sscanf((char*)&pdd->ATbuffs.begin()->at(0), "%*[^{]{ %*[^:]: %[^}]", atsptstr);
                 int substrnum =  splitStr(atsptstr, ",", buff, sizeof(buff));
                 for (int i = 0; i < substrnum; i++)
                 {
@@ -346,6 +350,11 @@ void *thread_down_deal(void *arg)
                 double baseT = log(atof(buff[1]));
                 dealAt_s.R = baseR * baseR / 1000;
                 double denT = dealAt_s.a + dealAt_s.b*baseT + dealAt_s.c*baseT*baseT*baseT;
+                if ( denT == 0 )
+                {
+                    continue;
+                }
+                
                 dealAt_s.T = 1 / denT - 273.2;
                 dealAt_s.P = dealAt_s.A*dealAt_s.R*dealAt_s.R + dealAt_s.B*dealAt_s.R + dealAt_s.C;
 
@@ -365,9 +374,11 @@ void *thread_down_deal(void *arg)
                                                                             dealAt_s.P, devdata[ (sw + std::to_string(dealAt_s.channel)).c_str() ].val);
                 dealAt_s.clear();
             }
+
+            pdd->ATbuffs.pop_front();
         }
     }
-
+    
     //===============采样数据==========================
     if (is_down(true))
     {
@@ -396,6 +407,61 @@ void *thread_down_deal(void *arg)
                 (const char *)item.dataFormatter.data());
           continue;
         }
+
+        /****************** AT指令延时等待回复 ******************/
+        if( strstr(item.factorType.data(), "JK_BGK") != NULL )  // 基康设备
+        {
+            static int last_jk_re485cmd_id = -1;   // 上次发送的jk设备id
+            static unordered_map<int, int> jk_res485_id_record; // jk设备记录和映射
+            static long jk_timeout = get_ms_clock() + 8000; // 超时计数
+            static int get_jk_res485 = i;
+            if ( get_jk_res485 >= 0 )
+            {
+                if ( jk_res485_id_record.size() > 0 && get_jk_res485 == i )  // 全部jk设备获取完毕
+                {
+                    get_jk_res485 = -1;
+                    INFO("记录完毕,基康设备有 %d 台", jk_res485_id_record.size());
+                    /* 调整映射：当前id --> 下一个id */
+                    vector<int> tmp_record;
+                    for (int id = 0; id < rtu.device.rs485.size(); id++)
+                    {
+                        if ( jk_res485_id_record.count(id) )
+                        {
+                            tmp_record.push_back(jk_res485_id_record[id]);
+                        }
+                    }
+                    for (int j = 0; j < tmp_record.size() - 1; j++)
+                    {
+                        jk_res485_id_record[tmp_record[j]] = tmp_record[j + 1];
+                    }
+                    jk_res485_id_record[tmp_record[tmp_record.size() - 1]] = tmp_record[0];
+                }
+                else
+                {
+                    jk_res485_id_record[i] = i;   //保存jk485id号
+                }
+            }
+            
+            if ( last_jk_re485cmd_id != -1 )
+            {
+                if ( dealAt_s.dealAtFlag != 2 && get_ms_clock() < jk_timeout ) // 没获取完或者没超时不能继续发送cmd
+                {
+                    continue;
+                }
+
+                /* 每次只放行一个不同jk设备发送cmd */                
+                if ( i != jk_res485_id_record[last_jk_re485cmd_id] && jk_res485_id_record.size() != 1 )    //不是下一台设备且不止一台则当前设备不能继续发送cmd
+                {
+                    continue;
+                }
+            }
+            
+            /* 可以发送cmd的设备处理 */
+            jk_timeout = get_ms_clock() + 8000;
+            last_jk_re485cmd_id = i;
+        }
+        /****************** 基康设备处理end ******************/
+
         pdd->setbaud(item.baud);
         value = read_a_data(pdd, index, 4000, &returnValue);
         pdd->process();

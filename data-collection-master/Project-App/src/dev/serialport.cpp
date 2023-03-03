@@ -452,6 +452,9 @@ void *serialport_read_thread(void *arg)
           {
             f->ATflag = 2;
             INFO("AT指令接收到 %s", (char *)f->ATbuf);
+            vector<u8> tmp_buf;
+            tmp_buf.insert(tmp_buf.begin(), f->ATbuf, (u8*)&f->ATbuf + sizeof(f->ATbuf));
+            f->ATbuffs.push_back(tmp_buf);
           }
         }
         /*  插入接收到AT指令数据 end */
@@ -459,7 +462,7 @@ void *serialport_read_thread(void *arg)
         /*  插入长度计算 start */
         char resultDataFilter_buf[32] = {0};
         int resultDataFilter_hexlen = 0;
-        bool isResultDataFilter = true;
+        bool isResultDataFilter = false;
         for (int i = 0; i < rtu.device.rs485.size(); i++)   // 获取指定数据头
         {
             rtu_485 item = rtu.device.rs485[i];
@@ -484,6 +487,7 @@ void *serialport_read_thread(void *arg)
                 isResultDataFilter = false;
                 break;
             }
+            isResultDataFilter = true;
         }
         
         if ( (isResultDataFilter == true && s->uart_receive.temp_ptr == s->rec_len_temp) || f->longflag == 1 )
@@ -496,6 +500,12 @@ void *serialport_read_thread(void *arg)
           f->longflag = 1;
           memcpy(f->longbuf + f->longlen, s->uart_receive.data_buffer, s->uart_receive.temp_ptr);
           f->longlen += s->uart_receive.temp_ptr;
+          for (int i = 0; i < f->longlen; i++)
+          {
+            printf("%02x ", f->longbuf[i]);
+          }
+          printf("\n");
+          INFO("-----------------------longlen:[%d], longbuf[2]:[%d]", f->longlen, f->longbuf[2]);
           if ( f->longlen >= f->longbuf[2] )    //接收完毕
           {
             f->longflag = 2;

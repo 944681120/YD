@@ -5,6 +5,7 @@
 bool zlog_inited = false;
 zlog_category_t *zcat;
 zlog_category_t *zcat_data;
+const char* version = "V1.1.20.01";
 
 void init_zlog(void)
 {
@@ -34,7 +35,7 @@ void init_zlog(void)
     return ;
   }
 
-  zlog_info(zcat, "===================================start up==============================");
+  zlog_info(zcat, "===================================start up, version:%s==============================", version);
   zlog_info(zcat, "app-cjq,start up....");
   zlog_inited = true;
 }
