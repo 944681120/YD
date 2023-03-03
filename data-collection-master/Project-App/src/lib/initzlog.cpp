@@ -5,7 +5,7 @@
 bool zlog_inited = false;
 zlog_category_t *zcat;
 zlog_category_t *zcat_data;
-const char* version = "V1.1.20.01";
+const char* version = "V1.1.20.00";
 
 void init_zlog(void)
 {
